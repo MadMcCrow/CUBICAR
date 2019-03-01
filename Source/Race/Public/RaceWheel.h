@@ -20,29 +20,38 @@ struct FSuspensionConfig
 
 	/** How far the wheel can go above the resting position */
 	UPROPERTY(EditAnywhere, Category = "Suspension")
-		float SuspensionMaxRaise; // = 8.0f;
+		float SuspensionMaxRaise; // default = 8.0f;
 
 	/** How far the wheel can drop below the resting position */
 	UPROPERTY(EditAnywhere, Category = "Suspension")
-		float SuspensionMaxDrop; // = 12.0f;
+		float SuspensionMaxDrop; // default = 12.0f;
 
 	/** Oscillation frequency of suspension. Standard cars have values between 5 and 10 */
 	UPROPERTY(EditAnywhere, Category = "Suspension")
-		float SuspensionNaturalFrequency; // = 9.0f;
+		float SuspensionNaturalFrequency; // default = 9.0f;
 
 	/**
 	 *	The rate at which energy is dissipated from the spring. Standard cars have values between 0.8 and 1.2.
 	 *	values < 1 are more sluggish, values > 1 or more twitchy
 	 */
 	UPROPERTY(EditAnywhere, Category = "Suspension")
-		float SuspensionDampingRatio; // = 1.05f;
+		float SuspensionDampingRatio; // default = 1.05f;
 
 
 	/** Default constructor set default values */
-	FSuspensionConfig() : SuspensionForceOffset(-4.0f), SuspensionMaxRaise(8.0f), SuspensionMaxDrop(12.0f),
-		SuspensionNaturalFrequency(9.0f), SuspensionDampingRatio(1.05f)
+	FSuspensionConfig() : SuspensionForceOffset(-4.0f), SuspensionMaxRaise(3.0f), SuspensionMaxDrop(5.0f),
+		SuspensionNaturalFrequency(12.0f), SuspensionDampingRatio(2.05f)
 	{
 		
+	}
+
+	virtual void SetWheel(UVehicleWheel * Wheel) const
+	{
+		Wheel->SuspensionDampingRatio = SuspensionDampingRatio;
+		Wheel->SuspensionForceOffset = SuspensionForceOffset;
+		Wheel->SuspensionMaxDrop = SuspensionMaxDrop;
+		Wheel->SuspensionMaxRaise = SuspensionMaxRaise;
+		Wheel->SuspensionNaturalFrequency = SuspensionNaturalFrequency;
 	}
 };
 
@@ -60,9 +69,11 @@ struct FTireFrictionConfig
 		TArray<FTireConfigMaterialFriction>	PhysicalMaterialFrictions;
 
 	/** Default constructor set default values */
-	FTireFrictionConfig() : FrictionScale(3.f)
-	{
+	FTireFrictionConfig() : FrictionScale(3.f){}
 
+	virtual void SetWheel(UVehicleWheel * Wheel) const
+	{
+		
 	}
 };
 
@@ -100,6 +111,11 @@ struct FRaceWheelConfig
 	FRaceWheelConfig() : Suspension(), bCanSteer(false), SteerAngle(40.f), bAffectedByHandbrake(false)
 	{
 
+	}
+	void SetWheel(UVehicleWheel * Wheel) const
+	{
+		Suspension.SetWheel(Wheel);
+		Tire.SetWheel(Wheel);
 	}
 };
 

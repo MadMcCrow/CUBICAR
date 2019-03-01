@@ -9,6 +9,8 @@ public class CUBICARTarget : TargetRules
 	{
 		Type = TargetType.Game;
 		ExtraModuleNames.Add("CUBICAR");
-		//ExtraModuleNames.Add("Race");
-	}
+        //ExtraModuleNames.Add("Race");
+        //OutExtraModuleNames.Add("MainMenu");
+
+    }
 }

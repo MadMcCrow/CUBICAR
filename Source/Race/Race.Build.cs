@@ -8,6 +8,10 @@ public class Race : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
+
+        PrivateDependencyModuleNames.Add("CUBICAR");
+        PublicDependencyModuleNames.Add("CUBICAR");
+
         //Public module names that this module uses.
         //In case you would like to add various classes that you're going to use in your game
         //you should add the core,coreuobject and engine dependencies.

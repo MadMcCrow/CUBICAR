@@ -7,6 +7,7 @@
 #include "RaceWheel.h"
 #include "Curves/CurveFloat.h"
 #include "WheeledVehicleMovementComponent4W.h"
+#include "CarInfo.h"
 #include "RacingCar.generated.h"
 
 
@@ -30,110 +31,35 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStopSkidding);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FUpsideDown);
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDrift, float, DriftAmount);
 
-/**
- *	Structure to store all Car info to display to player
- */
-USTRUCT(BlueprintType, meta = (DisplayName = "Car Dashboard"))
-struct FCarDashboardInfo
-{
-	GENERATED_BODY()
-public :
 
-	/** Engine RPM - Tachymeter */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float RPM;
-
-	/** Transmission */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int Gear;
-
-	/** Car Speed - Tachymeter */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Speed;
-
-};
-
-USTRUCT(BlueprintType, meta = (DisplayName = "Car Statistics"))
-struct FCarStatsInfo
-{
-	GENERATED_BODY()
-public:
-
-	// Steering Curve
-	UPROPERTY(EditAnywhere, Category = "Steering")
-		FRuntimeFloatCurve SteeringCurve;
-
-	// Transmission Data
-	UPROPERTY(EditAnywhere, Category = "Transmission")
-		FVehicleTransmissionData TransmissionSetup;
-
-	// Engine Data
-	UPROPERTY(EditAnywhere, Category = "Engine")
-		FVehicleEngineData EngineSetup;
-	
-	/** Front Wheels Class **/
-	UPROPERTY(EditAnywhere, Category = "Wheels")
-		TSubclassOf<URaceWheel> FrontWheelClass;
-
-	/** Rear Wheels Class **/
-	UPROPERTY(EditAnywhere, Category = "Wheels")
-		TSubclassOf<URaceWheel> RearWheelClass;
-
-	/** Max Horse Power */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Max Horse Power"))
-		float MaxHP;
-
-	/** Max Gear  */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Max Transmission Gear"))
-		int MaxGear;
-
-	/** Max RPM*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Maximum Engine RPM"))
-		float MaxRPM;
-
-	/** Max RPM*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Car Mass"))
-		float Mass;
-
-	/** Max RPM*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Car Dimensions"))
-		FVector Dimensions;
-
-	
-	FCarStatsInfo() : MaxHP (0.f), MaxGear(0), MaxRPM(0.f),  Mass(0.f), Dimensions(FVector(0.f)) {}
-	
-	FCarStatsInfo(const ARacingCar * Car);
-};
-
-
-/**
- *	Configuration for the Wheel.
- *	Class to build data Asset from
- */
-UCLASS()
-class RACE_API UCarAsset : public UDataAsset // UPrimaryDataAsset
+USTRUCT(BlueprintType, meta = (DisplayName = "Wheel Physics Info"))
+struct FWheelSlipInfo
 {
 	GENERATED_BODY()
 
-private:
+	UPROPERTY(BlueprintReadWrite)
+		FName WheelName;
 
-	/** Front Wheels Class **/
-	UPROPERTY(EditAnywhere)
-		FCarStatsInfo CarStats;
-public:
-	/**
-	* Getter for FrictionScale
-	*/
-	UFUNCTION(BlueprintPure)
-		FCarStatsInfo GetCarConfig() const { return CarStats; }
+	UPROPERTY(BlueprintReadWrite)
+		float LatSlipPercentage;
 
-	/**
-	* Setter for FrictionScale
-	*/
-	UFUNCTION(BlueprintCallable)
-		void SetCarConfig(FCarStatsInfo NewCarStatsInfo) { CarStats = NewCarStatsInfo; }
+	UPROPERTY(BlueprintReadWrite)
+		float LongSlipPercentage;
+
+	UPROPERTY(BlueprintReadWrite)
+		float LatSlipForce;
+
+	UPROPERTY(BlueprintReadWrite)
+		float LongSlipForce;
+
+	FWheelSlipInfo(FName NewWheelName = FName(), float NewLatSlipPercentage = 0, float NewLongSlipPercentage = 0,
+	               float NewLatSlipForce = 0, float NewLongSlipForce = 0) : WheelName(NewWheelName),
+	                                                                        LatSlipPercentage(NewLatSlipPercentage),
+	                                                                        LongSlipPercentage(NewLatSlipPercentage),
+	                                                                        LatSlipForce(NewLatSlipForce),
+	                                                                        LongSlipForce(NewLongSlipForce)
+	{}
 };
-
 
 
 UCLASS(config=Game)
@@ -177,10 +103,9 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-protected :
+	void SetupWheels(UWheeledVehicleMovementComponent4W* Vehicle4W) override;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Car")
-	UCarAsset * CarSetup;
+protected :
 
 
 	// Reset --------------------------------------------------------
@@ -232,7 +157,11 @@ protected :
 
 	/** Boolean Flag  to check if you're skidding **/
 	UPROPERTY(Transient)
-		bool IsSkidding;
+		bool IsLongSkidding;
+
+	/** Boolean Flag  to check if you're skidding **/
+	UPROPERTY(Transient)
+		bool IsLatSkidding;
 
 	/** Minimum Front/Back Skidding **/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Car|Skidding")
@@ -260,11 +189,15 @@ protected:
 	UFUNCTION(blueprintNativeEvent, Category = "Car|Skidding")
 		void EndDrift();
 
+	UFUNCTION(BlueprintPure, Category = "Car|Skidding")
+		TArray<FWheelSlipInfo> GetWheelsPhysInfo() const;
+
 private :
 
 	/** Performs Skidding Check, Called at tick **/
 	UFUNCTION()
 		void CheckSkidding();
+
 
 // Checkpoint -------------------------------------------------------
 protected:

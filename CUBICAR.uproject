@@ -9,7 +9,9 @@
 			"Type": "Runtime",
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
-				"Engine"
+				"Engine",
+				"Slate",
+				"UMG"
 			]
 		},
 		{
@@ -18,7 +20,18 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"Engine",
-				"PhysXVehicles"
+				"PhysXVehicles",
+				"CUBICAR",
+				"UMG"
+			]
+		},
+		{
+			"Name": "UserInterface",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"Slate"
 			]
 		}
 	],
@@ -29,6 +42,10 @@
 		},
 		{
 			"Name": "RawInput",
+			"Enabled": true
+		},
+		{
+			"Name": "ReplicationGraph",
 			"Enabled": true
 		}
 	]

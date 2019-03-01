@@ -13,7 +13,7 @@ class ACheckpoint;
  *  Base Game mode for the Races
  */
 UCLASS()
-class ARaceGameMode : public AGameMode
+class RACE_API ARaceGameMode : public AGameMode
 {
 	GENERATED_BODY()
 

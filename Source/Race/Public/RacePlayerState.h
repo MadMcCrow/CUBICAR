@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
-#include "RaceTime.h"
 #include "RacePlayerState.generated.h"
 
 
@@ -23,20 +22,20 @@ protected:
 		ACheckpoint * Checkpoint;
 
 	UPROPERTY()
-		FRaceTime Time;
+		FTimespan Time;
 
 public :
 	
-	FCheckpointScore(ACheckpoint * NewCheckpoint = nullptr, FRaceTime NewTime = FRaceTime()) : Checkpoint(NewCheckpoint), Time(NewTime){}
+	FCheckpointScore(ACheckpoint * NewCheckpoint = nullptr, FTimespan NewTime = FTimespan()) : Checkpoint(NewCheckpoint), Time(NewTime){}
 
-	void GetCheckpointScore(ACheckpoint * &GetCheckpoint, FRaceTime &GetTime) const	{ GetCheckpoint = Checkpoint; GetTime = Time; }
+	void GetCheckpointScore(ACheckpoint * &GetCheckpoint, FTimespan &GetTime) const	{ GetCheckpoint = Checkpoint; GetTime = Time; }
 
-	inline bool operator==(const  FCheckpointScore rhs) const { return Time.GetRealTime() == rhs.Time.GetRealTime(); }
-	inline bool operator!=(const  FCheckpointScore rhs) const { return Time.GetRealTime() != rhs.Time.GetRealTime(); }
-	inline bool operator< (const  FCheckpointScore rhs) const { return Time.GetRealTime() < rhs.Time.GetRealTime();  }
-	inline bool operator> (const  FCheckpointScore rhs) const { return Time.GetRealTime() > rhs.Time.GetRealTime();  }
-	inline bool operator<=(const  FCheckpointScore rhs) const { return Time.GetRealTime() <= rhs.Time.GetRealTime(); }
-	inline bool operator>=(const  FCheckpointScore rhs) const { return Time.GetRealTime() >= rhs.Time.GetRealTime(); }
+	inline bool operator==(const  FCheckpointScore rhs) const { return Time == rhs.Time; }
+	inline bool operator!=(const  FCheckpointScore rhs) const { return Time != rhs.Time; }
+	inline bool operator< (const  FCheckpointScore rhs) const { return Time < rhs.Time;  }
+	inline bool operator> (const  FCheckpointScore rhs) const { return Time > rhs.Time;  }
+	inline bool operator<=(const  FCheckpointScore rhs) const { return Time <= rhs.Time; }
+	inline bool operator>=(const  FCheckpointScore rhs) const { return Time >= rhs.Time; }
 };
 
 
@@ -50,6 +49,10 @@ class ARacePlayerState : public APlayerState
 {
 	GENERATED_BODY()
 
+private :
+
+	virtual void ClientInitialize(AController* C) override;
+
 protected:
 
 	UPROPERTY()
@@ -61,8 +64,17 @@ public:
 		ACheckpoint * GetLastPassedCheckpoint();
 
 	UFUNCTION(Server, Reliable, WithValidation)
-		void PassedCheckpoint(const APlayerController * Player, ACheckpoint * PassedCheckpoint);
+		void Server_PassedCheckpoint(const AController * Player, ACheckpoint * PassedCheckpoint);
 
+	UFUNCTION()
+		void NotifyPassedCheckpoint() const;
+
+	UFUNCTION()
+		void OnPassedCheckpoint(ACheckpoint* PassedCheckpoint);
+
+private:
+
+	AController * OwningPlayer;
 
 	
 };

@@ -33,6 +33,7 @@ private :
 	UPROPERTY(Category = "Race|Mesh", EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UStaticMeshComponent * CheckpointMesh;
 
+protected :
 	/** mesh for the Checkpoint */
 	UPROPERTY(Category = "Race|Collision", EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UBoxComponent * CollisionBox;

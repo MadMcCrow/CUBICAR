@@ -3,19 +3,17 @@
 #include "RaceGameState.h"
 #include "TimerManager.h"
 
-float ARaceGameState::GetTimeSinceStart() const
-{
-
-}
 
 void ARaceGameState::HandleMatchHasStarted()
 {
 	Super::HandleMatchHasStarted();
-
+	RaceStartOffset = FDateTime::Now().GetTimeOfDay();
 
 }
 
-FRaceTime ARaceGameState::TimeElapsedSinceMatchStart()
+FTimespan ARaceGameState::RaceTime() const
 {
-	return FRaceTime();
+	return FDateTime::Now().GetTimeOfDay() - RaceStartOffset;
 }
+
+

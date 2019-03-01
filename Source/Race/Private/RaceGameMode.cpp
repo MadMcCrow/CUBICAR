@@ -23,8 +23,10 @@ AActor* ARaceGameMode::ChoosePlayerStart_Implementation(AController* Player)
 	const auto PState = Cast<ARacePlayerState>(Player->PlayerState);
 	if (!PState)
 		return Start;
-
-	return PState->GetLastPassedCheckpoint();
+	const auto CheckpointStart = PState->GetLastPassedCheckpoint();
+	if (!CheckpointStart)
+		return Start;
+	return CheckpointStart;
 }
 
 

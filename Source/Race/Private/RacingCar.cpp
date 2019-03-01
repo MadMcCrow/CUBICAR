@@ -13,42 +13,10 @@
 #include "TimerManager.h"
 #include "RacePlayerState.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "CarInfo.h"
 
 #define LOCTEXT_NAMESPACE "VehiclePawn"
 
-FCarStatsInfo::FCarStatsInfo(const ARacingCar * Car)
-{
-	if (!Car)
-		return;
-	
-	const auto mesh = Car->GetMesh();
-
-	if (!mesh)
-		return;
-
-	UWheeledVehicleMovementComponent4W* Vehicle4W = CastChecked<UWheeledVehicleMovementComponent4W>(Car->GetVehicleMovement());
-	if (!Vehicle4W)
-		return;
-
-	Dimensions = mesh->CalcBounds(Car->GetActorTransform()).BoxExtent;
-	Mass = mesh->GetMass();
-
-	MaxRPM = Vehicle4W->MaxEngineRPM;
-	MaxGear = Vehicle4W->TransmissionSetup.ForwardGears.Num();
-
-
-	// Find max torque ( solve compilation error that occured when Using FindPeakTorque)
-	float PeakTorque = 0.f;
-	TArray<FRichCurveKey> TorqueKeys = Vehicle4W->EngineSetup.TorqueCurve.GetRichCurveConst()->GetCopyOfKeys();
-	for (int32 KeyIdx = 0; KeyIdx < TorqueKeys.Num(); KeyIdx++)
-	{
-		FRichCurveKey& Key = TorqueKeys[KeyIdx];
-		PeakTorque = FMath::Max(PeakTorque, Key.Value);
-	}
-
-	MaxHP = PeakTorque * MaxRPM / 5252.0;
-
-}
 
 FCarStatsInfo ARacingCar::GetCarStats()
 {
@@ -63,7 +31,7 @@ void ARacingCar::UpdateCarInfo()
 
 }
 
-ARacingCar::ARacingCar() :Super(), ResetDelay(10.f)
+ARacingCar::ARacingCar() :Super(), ResetDelay(10.f), LateralSlipThreshold(0.1), LongitudinalSlipThreshold(0.1)
 {
 	// Bind Drift Event
 	StartSkidding.AddDynamic(this, &ARacingCar::Drift);
@@ -136,8 +104,33 @@ void ARacingCar::EndDrift_Implementation()
 
 }
 
+TArray<FWheelSlipInfo> ARacingCar::GetWheelsPhysInfo() const
+{
+
+	TArray<FWheelSlipInfo> WheelSlipInfo;
+	const auto Vehicle4W = Cast<UWheeledVehicleMovementComponent4W>(GetVehicleMovement());
+
+	if (!Vehicle4W)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Wheels could not get fetched"));
+		return WheelSlipInfo;
+	}
+
+	for (auto it : Vehicle4W->Wheels)
+	{
+		FWheelSlipInfo NewWheel;
+		NewWheel.LatSlipForce = it->DebugLatForce;
+		NewWheel.LatSlipPercentage = it->DebugLatSlip * 100;
+		NewWheel.LongSlipForce = it->DebugLongForce;
+		NewWheel.LongSlipPercentage = it->DebugLongSlip * 100;
+		WheelSlipInfo.Add(NewWheel);
+	}
+	return WheelSlipInfo;
+}
+
 void ARacingCar::CheckSkidding()
 {
+	/**
 	bool SlipThresholdExceeded = GetVehicleMovement()->CheckSlipThreshold(LongitudinalSlipThreshold, LateralSlipThreshold);
 	if (SlipThresholdExceeded && !IsSkidding)
 	{
@@ -149,6 +142,39 @@ void ARacingCar::CheckSkidding()
 		StopSkidding.Broadcast();
 		IsSkidding = false;
 	}
+	*/
+
+	const auto Vehicle4W = Cast<UWheeledVehicleMovementComponent4W>(GetVehicleMovement());
+
+	if (!Vehicle4W)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Wheels could not get fetched"));
+		return;
+	}
+
+	if (!Vehicle4W->Wheels.IsValidIndex(3))
+		return;
+
+	for (auto it:Vehicle4W->Wheels)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Wheel  has %f Lat Force"), it->DebugLatForce);
+		if(it->DebugLongSlip*100 > LongitudinalSlipThreshold)
+		{
+			IsLongSkidding = true;
+			UE_LOG(LogTemp, Warning, TEXT("Wheel %d is long slip"), it->WheelIndex);
+			return;
+		}
+		if (it->DebugLatSlip*100 > LateralSlipThreshold)
+		{
+			IsLatSkidding = true;
+			UE_LOG(LogTemp, Warning, TEXT("Wheel %d is lat slip"), it->WheelIndex);
+			return;
+		}
+
+		IsLongSkidding = false;
+		IsLatSkidding  = false;
+	}
+
 }
 
 void ARacingCar::PassedCheckpoint_Implementation(ACheckpoint* Checkpoint)
@@ -172,6 +198,11 @@ void ARacingCar::BeginPlay()
 {
 	Super::BeginPlay();
 	bCanReset = true;
+}
+
+void ARacingCar::SetupWheels(UWheeledVehicleMovementComponent4W* Vehicle4W)
+{
+	Super::SetupWheels(Vehicle4W);
 }
 
 

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameState.h"
-#include "RaceTime.h"
 #include "RaceGameState.generated.h"
 /**
  * 
@@ -18,17 +17,17 @@ public:
 
 	virtual void HandleMatchHasStarted() override;
 
-
+	UFUNCTION()
+		FTimespan RaceTime() const;
 
 
 private:
 
-	/**	Offset compared to the Hour - Correspond to the difference we have to do with FRaceTime::Now	*/
+	/**	Offset compared to the begin of the race since- Correspond to the difference to FTimespan::GetTimeOfDay() */
 	UPROPERTY()//Replicated)
-		FRaceTime RaceStartOffset;
+		FTimespan RaceStartOffset;
 
-	UFUNCTION()
-		FRaceTime TimeElapsedSinceMatchStart();
+	
 
 
 };

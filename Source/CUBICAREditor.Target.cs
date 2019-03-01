@@ -9,6 +9,6 @@ public class CUBICAREditorTarget : TargetRules
 	{
 		Type = TargetType.Editor;
 		ExtraModuleNames.Add("CUBICAR");
-        //ExtraModuleNames.Add("Race");
+      //  ExtraModuleNames.Add("MainMenu");
     }
 }

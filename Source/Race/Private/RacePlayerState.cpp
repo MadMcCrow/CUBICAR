@@ -4,11 +4,14 @@
 #include "Kismet/GameplayStatics.h"
 #include "RaceGameMode.h"
 #include "Race.h"
+#include "RaceGameState.h"
+#include "Checkpoint.h"
 
 ACheckpoint* ARacePlayerState::GetLastPassedCheckpoint()
 {
 	ACheckpoint * RetCheckpoint;
-	FRaceTime TimeScore;
+	FTimespan TimeScore;
+
 	PassedCheckpoints.Sort([](FCheckpointScore A, FCheckpointScore B) {
 		return A < B;
 	});
@@ -25,14 +28,13 @@ ACheckpoint* ARacePlayerState::GetLastPassedCheckpoint()
 	const auto GM =UGameplayStatics::GetGameMode(this);
 	if (!GM)
 		return nullptr;
-
-	return  Cast<ACheckpoint>(GM->ChoosePlayerStart(PC));
+	return nullptr;
 	
 }
 
 
 // Ask Server if we really passed Checkpoint
-bool ARacePlayerState::PassedCheckpoint_Validate(const APlayerController* Player, ACheckpoint* PassedCheckpoint)
+bool ARacePlayerState::Server_PassedCheckpoint_Validate(const AController* Player, ACheckpoint* PassedCheckpoint)
 {
 	if (!Player)
 		return false;
@@ -47,8 +49,27 @@ bool ARacePlayerState::PassedCheckpoint_Validate(const APlayerController* Player
 
 }
 
-void ARacePlayerState::PassedCheckpoint_Implementation(const APlayerController* Player,ACheckpoint* PassedCheckpoint)
+void ARacePlayerState::Server_PassedCheckpoint_Implementation(const AController* Player,ACheckpoint* PassedCheckpoint)
 {
-	const FCheckpointScore CP(PassedCheckpoint, FRaceTime::SinceRaceStart(this));
-	PassedCheckpoints.Add(CP);
+	const auto GS = Cast<ARaceGameState>(UGameplayStatics::GetGameState(this));
+	PassedCheckpoints.Add(FCheckpointScore(PassedCheckpoint, GS->RaceTime()));
+}
+
+void ARacePlayerState::ClientInitialize(AController* C)
+{
+	Super::ClientInitialize(C);
+	OwningPlayer = C;
+}
+
+void ARacePlayerState::NotifyPassedCheckpoint() const
+{
+}
+
+void ARacePlayerState::OnPassedCheckpoint(ACheckpoint* PassedCheckpoint)
+{
+	if (!PassedCheckpoint)
+		return;
+
+	if(OwningPlayer)
+		Server_PassedCheckpoint(OwningPlayer, PassedCheckpoint);
 }

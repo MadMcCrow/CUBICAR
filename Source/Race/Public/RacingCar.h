@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BaseCar.h"
-#include "RaceWheel.h"
+#include "Wheels/RaceWheel.h"
 #include "Curves/CurveFloat.h"
 #include "WheeledVehicleMovementComponent4W.h"
 #include "CarInfo.h"
@@ -157,11 +157,14 @@ protected :
 
 	/** Boolean Flag  to check if you're skidding **/
 	UPROPERTY(Transient)
-		bool IsLongSkidding;
+		bool bIsLongSkidding;
 
 	/** Boolean Flag  to check if you're skidding **/
 	UPROPERTY(Transient)
-		bool IsLatSkidding;
+		bool bIsLatSkidding;
+
+	UPROPERTY(Transient)
+		bool bIsSkidding;
 
 	/** Minimum Front/Back Skidding **/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Car|Skidding")

@@ -2,7 +2,7 @@
 
 #include "RacingCar.h"
 #include "Race.h"
-#include "RaceWheel.h"
+#include "Wheels/RaceWheel.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/TextRenderComponent.h"
@@ -130,20 +130,20 @@ TArray<FWheelSlipInfo> ARacingCar::GetWheelsPhysInfo() const
 
 void ARacingCar::CheckSkidding()
 {
-	/**
+	
 	bool SlipThresholdExceeded = GetVehicleMovement()->CheckSlipThreshold(LongitudinalSlipThreshold, LateralSlipThreshold);
-	if (SlipThresholdExceeded && !IsSkidding)
+	if (SlipThresholdExceeded && !bIsSkidding)
 	{
 		StartSkidding.Broadcast();
-		IsSkidding = true;
+		bIsSkidding = true;
 	}
-	else if (!SlipThresholdExceeded && IsSkidding)
+	else if (!SlipThresholdExceeded && bIsSkidding)
 	{
 		StopSkidding.Broadcast();
-		IsSkidding = false;
+		bIsSkidding = false;
 	}
-	*/
-
+	
+	/*
 	const auto Vehicle4W = Cast<UWheeledVehicleMovementComponent4W>(GetVehicleMovement());
 
 	if (!Vehicle4W)
@@ -157,23 +157,21 @@ void ARacingCar::CheckSkidding()
 
 	for (auto it:Vehicle4W->Wheels)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Wheel  has %f Lat Force"), it->DebugLatForce);
 		if(it->DebugLongSlip*100 > LongitudinalSlipThreshold)
 		{
-			IsLongSkidding = true;
-			UE_LOG(LogTemp, Warning, TEXT("Wheel %d is long slip"), it->WheelIndex);
+			bIsLongSkidding = true;
 			return;
 		}
 		if (it->DebugLatSlip*100 > LateralSlipThreshold)
 		{
-			IsLatSkidding = true;
-			UE_LOG(LogTemp, Warning, TEXT("Wheel %d is lat slip"), it->WheelIndex);
+			bIsLatSkidding = true;
 			return;
 		}
 
-		IsLongSkidding = false;
-		IsLatSkidding  = false;
+		bIsLongSkidding = false;
+		bIsLatSkidding  = false;
 	}
+	*/
 
 }
 

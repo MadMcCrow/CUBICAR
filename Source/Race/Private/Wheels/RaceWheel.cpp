@@ -6,10 +6,10 @@
 
 URaceWheel::URaceWheel() :Super()
 {
-	ShapeRadius = 18.f;
-	ShapeWidth = 15.0f;
+	ShapeRadius = 35.f;
+	ShapeWidth = 10.0f;
 	bAffectedByHandbrake = false;
-	SteerAngle = 40.f;
+	SteerAngle = 50.f;
 
 	// Setup suspension forces
 	SuspensionForceOffset = -4.0f;

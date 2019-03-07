@@ -6,6 +6,7 @@
 
 UBaseWheelRear::UBaseWheelRear()
 {
+	/* Buggy/Advanced Values
 	ShapeRadius = 18.0f;
 	ShapeWidth = 15.0f;
 	bAffectedByHandbrake = true;
@@ -21,4 +22,10 @@ UBaseWheelRear::UBaseWheelRear()
 	// Find the tire object and set the data for it
 	static ConstructorHelpers::FObjectFinder<UTireConfig> TireData(TEXT("/Game/Vehicles/WheelData/Vehicle_BackTireConfig.Vehicle_BackTireConfig"));
 	TireConfig = TireData.Object;
+	*/
+
+	ShapeRadius = 35.f;
+	ShapeWidth = 10.0f;
+	bAffectedByHandbrake = true;
+	SteerAngle = 0.f;
 }

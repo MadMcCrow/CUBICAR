@@ -7,12 +7,10 @@
 #include "BaseCar.generated.h"
 
 class UWheeledVehicleMovementComponent4W;
-class UPhysicalMaterial;
 class UCameraComponent;
 class USpringArmComponent;
 class UTextRenderComponent;
 class UInputComponent;
-class UAudioComponent;
 
 UCLASS(config=Game)
 class ABaseCar : public AWheeledVehicle
@@ -35,10 +33,6 @@ class ABaseCar : public AWheeledVehicle
 	UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* InternalCamera;
 
-	/** Audio component for the engine sound */
-	UPROPERTY(Category = Display, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UAudioComponent* EngineSoundComponent;
-
 public:
 	ABaseCar();
 
@@ -52,7 +46,6 @@ public:
 
 	/** Initial offset of incar camera */
 	FVector InternalCameraOrigin;
-
 	// Begin Pawn interface
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 	// End Pawn interface
@@ -61,22 +54,17 @@ public:
 	virtual void Tick(float Delta) override;
 protected:
 	virtual void BeginPlay() override;
+
+public:
 	// End Actor interface
 
-protected:
-	/** Update the Sound to match the Car Speed and RPM */
-	virtual void UpdateSound();
-
-	/**	Do the necessary adjustment for the Head Mounted Display	*/
-	virtual void UpdateHMD();
-
-public :
 	/** Handle pressing forwards */
 	void MoveForward(float Val);
+	/** Setup the strings used on the hud */
+	void SetupInCarHUD();
 
 	/** Update the physics material used by the vehicle mesh */
 	void UpdatePhysicsMaterial();
-
 	/** Handle pressing right */
 	void MoveRight(float Val);
 	/** Handle handbrake pressed */
@@ -90,22 +78,19 @@ public :
 
 	static const FName LookUpBinding;
 	static const FName LookRightBinding;
-	static const FName EngineAudioRPM;
 
 private:
 	/** 
 	 * Activate In-Car camera. Enable camera and sets visibility of incar hud display
 	 *
-	 * @param	bState true will enable in car view and set visibility of various
+	 * @param	bState true will enable in car view and set visibility of various if its doesnt match new state
+	 * @param	bForce true will force to always change state
 	 */
-	void EnableIncarView( const bool bState );
+	void EnableIncarView( const bool bState, const bool bForce = false );
+
 
 	/* Are we on a 'slippery' surface */
 	bool bIsLowFriction;
-	/** Slippery Material instance */
-	UPhysicalMaterial* SlipperyMaterial;
-	/** Non Slippery Material instance */
-	UPhysicalMaterial* NonSlipperyMaterial;
 
 
 public:
@@ -115,19 +100,26 @@ public:
 	FORCEINLINE UCameraComponent* GetCamera() const { return Camera; }
 	/** Returns InternalCamera subobject **/
 	FORCEINLINE UCameraComponent* GetInternalCamera() const { return InternalCamera; }
-	/** Returns EngineSoundComponent subobject **/
-	FORCEINLINE UAudioComponent* GetEngineSoundComponent() const { return EngineSoundComponent; }
 
 
+
+	// Setup Functions -----------------------------------------------------------------------------
 protected:
+	virtual void  SetupWheels(UWheeledVehicleMovementComponent4W* Vehicle4W);
 
-	virtual void SetupWheels(UWheeledVehicleMovementComponent4W* Vehicle4W);
+	virtual void SetupCamera();
 
-	virtual void SetupEngine(UWheeledVehicleMovementComponent4W* Vehicle4W);
+	// Speed and gear info ------------------------------------------------------------------
+public:
+	UFUNCTION(BlueprintPure)
+		float GetSpeed() const;
 
-	virtual void SetupTransmission(UWheeledVehicleMovementComponent4W* Vehicle4W);
+	UFUNCTION(BlueprintPure)
+		FText GetSpeedAsText() const;
 
-	virtual void SetupSteering(UWheeledVehicleMovementComponent4W* Vehicle4W);
+	UFUNCTION(BlueprintPure)
+		int GetGear() const;
 
-
+	UFUNCTION(BlueprintPure)
+		FText GetGearAsText() const;
 };

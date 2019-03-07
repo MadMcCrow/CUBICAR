@@ -45,7 +45,7 @@ struct FSuspensionConfig
 		
 	}
 
-	virtual void SetWheel(UVehicleWheel * Wheel) const
+	void SetWheel(UVehicleWheel * Wheel) const
 	{
 		Wheel->SuspensionDampingRatio = SuspensionDampingRatio;
 		Wheel->SuspensionForceOffset = SuspensionForceOffset;
@@ -71,7 +71,7 @@ struct FTireFrictionConfig
 	/** Default constructor set default values */
 	FTireFrictionConfig() : FrictionScale(3.f){}
 
-	virtual void SetWheel(UVehicleWheel * Wheel) const
+	void SetWheel(UVehicleWheel * Wheel) const
 	{
 		
 	}

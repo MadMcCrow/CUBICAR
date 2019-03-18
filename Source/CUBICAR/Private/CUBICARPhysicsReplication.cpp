@@ -2,9 +2,9 @@
 #include "PhysicsEngine/PhysicsSettings.h"
 
 
-FCUBICARPhysicsReplication::FCUBICARPhysicsReplication(FPhysScene* PhysScene)
- : FPhysicsReplication(PhysScene)
+FCUBICARPhysicsReplication::FCUBICARPhysicsReplication(FPhysScene* PhysScene) : FPhysicsReplication(PhysScene)
  {
+
  }
  
  void FCUBICARPhysicsReplication::OnTick(float DeltaSeconds, TMap<TWeakObjectPtr<UPrimitiveComponent>, FReplicatedPhysicsTarget>& ComponentsToTargets)
@@ -41,9 +41,6 @@ FCUBICARPhysicsReplication::FCUBICARPhysicsReplication(FPhysScene* PhysScene)
      }
  }
  
- ICUBICARPhysicsReplicationFactory::ICUBICARPhysicsReplicationFactory()
- {
- }
  
  FPhysicsReplication* ICUBICARPhysicsReplicationFactory::Create(FPhysScene* OwningPhysScene)
  {

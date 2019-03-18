@@ -44,22 +44,22 @@ public:
 	
 
 	UFUNCTION(BlueprintCallable, Category = "Button|Event")
-		virtual void OnClicked();
+		virtual void Clicked();
 
 	virtual void BindDelegates() override;
 
 
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Button|Event")
-	FOnButtonClickedEvent	OnClickedDelegate;
+	FOnButtonClickedEvent	OnClicked;
 	UPROPERTY(BlueprintAssignable, Category = "Button|Event")
-	FOnButtonPressedEvent	OnPressedDelegate;
+	FOnButtonPressedEvent	OnPressed;
 	UPROPERTY(BlueprintAssignable, Category = "Button|Event")
-	FOnButtonReleasedEvent	OnReleaseDelegate;
+	FOnButtonReleasedEvent	OnRelease;
 	UPROPERTY(BlueprintAssignable, Category = "Button|Event")
-	FOnButtonHoverEvent		OnHoverDelegate;
+	FOnButtonHoverEvent		OnHover;
 	UPROPERTY(BlueprintAssignable, Category = "Button|Event")
-	FOnButtonHoverEvent		OnUnhoverDelegate;
+	FOnButtonHoverEvent		OnUnhover;
 
 	
 };

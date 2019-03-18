@@ -23,9 +23,18 @@ public :
 
 	virtual void SetIsEnabled(bool bInIsEnabled) override;
 
-protected :
+	virtual void OnWidgetRebuilt() override;
 
-	void OnWidgetRebuilt() override;
+
+	/**	Hides the Modal menu */
+	UFUNCTION(BlueprintCallable, meta=(DefaultsToSelf))
+	virtual void Close();
+
+	/**	Shows the Modal menu */
+	UFUNCTION(BlueprintCallable, meta=(DefaultsToSelf))
+		virtual void Open();
+
+protected :
 
 	UPROPERTY(meta = (BindWidget))
 		UCUBICARButton * CloseButton;
@@ -33,5 +42,9 @@ protected :
 
 	UPROPERTY(meta = (BindWidget))
 		class UTextBlock * Title;
-	
+
+	UPROPERTY(EditAnywhere)
+		FText WindowTitle;
+
+	void BindDelegates() override;
 };

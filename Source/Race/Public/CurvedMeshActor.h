@@ -55,9 +55,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Spline", meta = (DisplayName = "Update Curved Mesh"))
 		void UpdateCurvedMesh(int32 SplineIndex, USplineMeshComponent * CurvedMesh, bool UpdateSectionLenght);
 
+#if WITH_EDITORONLY_DATA
 	void PostEditChangeProperty(FPropertyChangedEvent & PropertyChangedEvent) override;
 
-#if WITH_EDITORONLY_DATA
 	void OnObjectSelected(UObject* Object);
 #endif
 

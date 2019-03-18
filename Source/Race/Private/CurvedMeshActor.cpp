@@ -147,13 +147,13 @@ void ACurvedMeshActor::UpdateCurvedMesh(int32 SplineIndex, USplineMeshComponent*
 	CurvedMesh->UpdateMesh();
 }
 
+#if WITH_EDITORONLY_DATA
 void ACurvedMeshActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	//SetupSplineMeshes();
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 
-#if WITH_EDITORONLY_DATA
 void ACurvedMeshActor::OnObjectSelected(UObject* Object)
 {
 	if (Object == this)

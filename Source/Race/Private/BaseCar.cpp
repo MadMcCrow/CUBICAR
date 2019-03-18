@@ -32,13 +32,6 @@ const FName ABaseCar::LookRightBinding("LookRight");
 
 ABaseCar::ABaseCar()
 {
-	// Car mesh
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> CarMesh(TEXT("/Game/Vehicles/Sedan/Sedan_SkelMesh.Sedan_SkelMesh"));
-	GetMesh()->SetSkeletalMesh(CarMesh.Object);
-
-	static ConstructorHelpers::FClassFinder<UObject> AnimBPClass(TEXT("/Game/Vehicles/Sedan/Sedan_AnimBP"));
-	GetMesh()->SetAnimInstanceClass(AnimBPClass.Class);
-
 	// Simulation
 	UWheeledVehicleMovementComponent4W* Vehicle4W = CastChecked<UWheeledVehicleMovementComponent4W>(GetVehicleMovement());
 

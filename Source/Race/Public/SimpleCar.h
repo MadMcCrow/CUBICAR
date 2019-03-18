@@ -5,8 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "CarStatics.h"
-//#include "PhysicsEngine/PhysicsAsset.h"
+#include "PhysicsEngine/PhysicsAsset.h"
 #include "SimpleCar.generated.h"
+
 
 
 class UAudioComponent;
@@ -60,29 +61,34 @@ private :
 #endif // WITH_EDITOR
 
 	/**  The main skeletal mesh associated with this Vehicle */
-	//UPROPERTY(Category = "Vehicle", VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Category = "Vehicle", VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		USkeletalMeshComponent* Mesh;
 
 
 	// Car Wheels Components	---------------------------------------------------------------------- 
+protected:
 
-	//UPROPERTY(Category = "Vehicle", EditDefaultsOnly, BlueprintReadOnly) //,meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Category = "Vehicle", EditDefaultsOnly, BlueprintReadOnly) //,meta = (AllowPrivateAccess = "true"))
 		UStaticMesh * WheelMesh;
 
+private :
 	//wheel meshes
-	//UPROPERTY() // Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY() // Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UStaticMeshComponent* Wheel0;
-	//UPROPERTY() //Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY() //Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UStaticMeshComponent* Wheel1;
-	//UPROPERTY() // Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY() // Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UStaticMeshComponent* Wheel2;
-	//UPROPERTY() // Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY() // Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UStaticMeshComponent* Wheel3;
 
-	/** Todo: Remove the Array and replace it by a function */
-	//wheel array for iterating over wheels
-	//UPROPERTY(BlueprintReadOnly, Category = VehicleSetup, meta = (AllowPrivateAccess = "true"))
-		TArray<UStaticMeshComponent*> WheelArray;
+	TArray<UStaticMeshComponent *> WheelArray;
+
+protected :
+
+	UFUNCTION(BlueprintPure)
+		TArray<UStaticMeshComponent *> GetWheelArray();
+
 
 
 	// Car Physics	----------------------------------------------------------------------
@@ -97,11 +103,11 @@ private:
 	// Car Camera	----------------------------------------------------------------------
 private :
 	/** Spring arm that will offset the camera */
-	//UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		USpringArmComponent* SpringArm;
 
 	/** Camera component that will be our viewpoint */
-	//UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UCameraComponent* Camera;
 
 protected :
@@ -138,7 +144,7 @@ protected :
 
 
 protected:
-	//UPROPERTY(BlueprintReadWrite, Category = "Engine")
+	UPROPERTY(Transient)
 		FCarDashBoard Dashboard;
 
 public:
@@ -147,36 +153,36 @@ public:
 
 	// Car Audio		---------------------------------------------------------------------- 
 protected:
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup|Sound|Engine")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup|Sound|Engine")
 		FCarEngineSound CarSound;
 
 private:
 	/** audio component for engine sounds */
-	//UPROPERTY(Category = "Sound", BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Category = "Sound", BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UAudioComponent* EngineAC;
 
 	// Car Engine		---------------------------------------------------------------------- 
 protected :
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup|Engine")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup|Engine")
 	FCarEngineSetup EngineSetup;
 
-	//UPROPERTY()
+	UPROPERTY()
 	FCarEngineUpdate EngineUpdate;
 
 	// Car Wheels		---------------------------------------------------------------------- 
 protected :
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup|Wheels")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup|Wheels")
 		FCarWheelsSetup WheelsSetup;
 
-	//UPROPERTY()
+	UPROPERTY()
 		FCarWheelsUpdate WheelsUpdate;
 
 	// Car Suspensions	---------------------------------------------------------------------- 
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup|Suspension")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup|Suspension")
 		FCarSuspensionsSetup SuspensionsSetup;
 
-	//UPROPERTY()
+	UPROPERTY()
 		FCarSuspensionsUpdate SuspensionsUpdate;
 
 protected:
@@ -184,17 +190,17 @@ protected:
 	// Car Effects		---------------------------------------------------------------------- 
 
 	/** skid sound loop */
-	//UPROPERTY(Category = Effects, EditDefaultsOnly)
+	UPROPERTY(Category = Effects, EditDefaultsOnly)
 		USoundCue* SkidSound;
 
 	//tire smoke
-	//UPROPERTY(EditAnywhere, Category = "Wheels")
+	UPROPERTY(EditAnywhere, Category = "Wheels")
 		UParticleSystem* TireSmoke;
-	//UPROPERTY(EditAnywhere, Category = "Wheels")
+	UPROPERTY(EditAnywhere, Category = "Wheels")
 		UParticleSystem* TireMarks;
 
 	/** dust FX components */
-	//UPROPERTY(Transient)
+	UPROPERTY(Transient)
 		UParticleSystemComponent* DustPSC[4];
 
 
@@ -203,10 +209,9 @@ protected:
 	/** Returns Mesh subobject **/
 	class USkeletalMeshComponent* GetMesh() const;
 
-	//FORCEINLINE UPoseableMeshComponent* GetVisibleMesh() const {return VisibleMesh;}
 	/** Returns SpringArm subobject **/
-	//FORCEINLINE USpringArmComponent* GetSpringArm() const { return SpringArm; }
+	FORCEINLINE USpringArmComponent* GetSpringArm() const { return SpringArm; }
 	/** Returns Camera subobject **/
-	//FORCEINLINE UCameraComponent* GetCamera() const { return Camera; }
+	FORCEINLINE UCameraComponent* GetCamera() const { return Camera; }
 
 };

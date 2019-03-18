@@ -38,7 +38,7 @@ ASimpleCar::ASimpleCar()
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm0"));
 	SpringArm->TargetOffset = FVector(0.f, 0.f, 50.f);
 	SpringArm->SetRelativeRotation(FRotator(-12.f, 0.f, 0.f));
-	SpringArm->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
+	SpringArm->SetupAttachment(RootComponent); // FAttachmentTransformRules::KeepWorldTransform);
 	SpringArm->TargetArmLength = 750.0f;
 	SpringArm->bEnableCameraRotationLag = true;
 	SpringArm->CameraRotationLagSpeed = 7.f;
@@ -47,7 +47,7 @@ ASimpleCar::ASimpleCar()
 
 	// Create camera component 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera0"));
-	Camera->AttachToComponent(SpringArm, FAttachmentTransformRules::KeepWorldTransform, USpringArmComponent::SocketName);
+	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName); // FAttachmentTransformRules::KeepWorldTransform, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
 	Camera->FieldOfView = 90.f;
 
@@ -78,7 +78,7 @@ ASimpleCar::ASimpleCar()
 
 	for (int c = 0; c <4; c++)
 	{
-		ArrowArray[c]->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
+		ArrowArray[c]->SetupAttachment(RootComponent);//AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
 		ArrowArray[c]->SetRelativeLocation(SuspensionsSetup.SpringTopLocation[c]);
 	}
 
@@ -102,7 +102,7 @@ ASimpleCar::ASimpleCar()
 	for (auto it : WheelArray)
 	{
 		it->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		it->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
+		it->SetupAttachment(RootComponent);//AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
 		if (WheelMesh)
 		{
 			it->SetStaticMesh(WheelMesh);
@@ -112,7 +112,7 @@ ASimpleCar::ASimpleCar()
 	//engine sound
 	EngineAC = CreateDefaultSubobject<UAudioComponent>(TEXT("EngineAudio"));
 	//EngineAC->SetSound(EngineSound);
-	EngineAC->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepWorldTransform);
+	EngineAC->SetupAttachment(GetMesh()); // AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepWorldTransform);
 
 	WheelsUpdate.WheelCenterLocation.Init(FVector(0.0f, 0.0f, 0.0f), 4);
 	WheelsUpdate.TireHitLocation.Init(FVector(0.0f, 0.0f, 0.0f), 4);
@@ -185,8 +185,11 @@ void ASimpleCar::Tick(float DeltaTime)
 		FVector SuspensionLocation = BodyLocation + BodyForwardVector * SuspensionsSetup.SpringTopLocation[b].X + BodyRightVector * SuspensionsSetup.SpringTopLocation[b].Y + BodyUpVector * SuspensionsSetup.SpringTopLocation[b].Z;
 		FVector TempVel = MainBodyInstance->GetUnrealWorldVelocityAtPoint(SuspensionLocation);
 
-		// Set wheel location
-		WheelsUpdate.WheelCenterLocation[b] = SuspensionLocation - (BodyUpVector * (SuspensionsUpdate.SpringLengthArray[b] - WheelsSetup.Radius));
+		if (WheelsUpdate.WheelCenterLocation)
+		if(WheelsUpdate.WheelCenterLocation.Num()<4)
+			if(WheelsUpdate.WheelCenterLocation.IsValidIndex(b))
+				if(SuspensionsUpdate.SpringLengthArray.IsValidIndex(b))
+				WheelsUpdate.WheelCenterLocation[b] = SuspensionLocation - (BodyUpVector * (SuspensionsUpdate.SpringLengthArray[b] - WheelsSetup.Radius));
 
 		// Calculate wheel forward vector
 		FVector WheelForward = BodyForwardVector.RotateAngleAxis(WheelsUpdate.CurrentAngle[b], BodyUpVector);
@@ -200,7 +203,7 @@ void ASimpleCar::Tick(float DeltaTime)
 		// Apply wheel delta rotation to the current rotation
 		WheelsUpdate.CurrentWheelPitch[b] -= WheelsUpdate.DeltaPitch;
 
-		if (WheelArray[b] != NULL) {
+		if (WheelArray[b]) {
 			//rotate/locate wheel meshes
 			WheelArray[b]->SetWorldLocation(WheelsUpdate.WheelCenterLocation[b]);
 			WheelArray[b]->SetRelativeRotation(FRotator(WheelsUpdate.CurrentWheelPitch[b], WheelsUpdate.CurrentAngle[b], 0.0f));
@@ -337,6 +340,16 @@ void ASimpleCar::MoveRight(float Val)
 
 }
 
+
+TArray<UStaticMeshComponent*> ASimpleCar::GetWheelArray()
+{
+	TArray<UStaticMeshComponent*> Wheels;
+	Wheels.Emplace(Wheel0);
+	Wheels.Emplace(Wheel1);
+	Wheels.Emplace(Wheel2);
+	Wheels.Emplace(Wheel3);
+	return Wheels;
+}
 
 // Called every substep for selected body instance
 void ASimpleCar::CustomPhysics(float DeltaTime, FBodyInstance* BodyInstance)

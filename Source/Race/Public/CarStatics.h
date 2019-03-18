@@ -13,35 +13,34 @@ class UParticleSystem;
  *	@struct FCarDashBoard
  *	Car values showed during game play
  */
-//USTRUCT(BlueprintType, Category = "Display", meta = (DisplayName = "Car Dashboard Infos"))
 USTRUCT()
 struct FCarDashBoard
 {
 	GENERATED_BODY()
 
-//private:
+protected:
 
-	// UPROPERTY()
+	UPROPERTY()
 		float Speed_KPH;
 
-	// UPROPERTY()
+	UPROPERTY()
 		float Engine_RPM;
 
-	// UPROPERTY()
+	UPROPERTY()
 		int Transmission_Gear;
 
-	// UPROPERTY()
+	UPROPERTY()
 		bool bIsInReverse;
 
-	//friend class UCarStatics;
-	//friend class ASimpleCar;
+	friend class UCarStatics;
+	friend class ASimpleCar;
 
 public:
 
-	//FCarDashBoard(	float NewSpeed_KPH = 0,	float NewEngine_RPM = 0, int NewTransmissionGear = 0) : Speed_KPH(NewSpeed_KPH) , Engine_RPM(NewEngine_RPM), Transmission_Gear(NewTransmissionGear)
-	//{}
-
-	
+	FCarDashBoard(	float NewSpeed_KPH = 0,	float NewEngine_RPM = 0, int NewTransmissionGear = 0, bool NewbIsInReverse = false) :
+		Speed_KPH(NewSpeed_KPH), Engine_RPM(NewEngine_RPM), Transmission_Gear(NewTransmissionGear), bIsInReverse(NewbIsInReverse)
+	{
+	}
 };
 
 
@@ -49,99 +48,112 @@ public:
  *	@struct FCarEngineUpdate
  *	Car values used during game play, will be updated often
  */
-//USTRUCT(BlueprintType, Category = "Setup", meta = (DisplayName = "Car Engine Update"))
+//USTRUCT(BlueprintType, Category = "Engine|Update", meta = (DisplayName = "Car Engine Update"))
 USTRUCT()
 struct FCarEngineUpdate
 {
 	GENERATED_BODY()
-//protected:
 
-	// UPROPERTY(BlueprintReadOnly, Category = "Engine")
+protected:
+
+	//UPROPERTY(BlueprintReadOnly, Category = "Engine")
+	UPROPERTY()
 		float Throttle = 0.0f;
-	// UPROPERTY(BlueprintReadOnly, Category = "Engine")
+	UPROPERTY()
 		bool bClutchEngaged = false;
-	// UPROPERTY(BlueprintReadOnly, Category = "Engine")
+	UPROPERTY()
 		float CurrentPower = 0.0f;
-	// UPROPERTY(BlueprintReadOnly, Category = "Engine")
+	UPROPERTY()
 		float AvailablePower = 0.0f;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+	UPROPERTY()
 		float WastedPower = 0.0f;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+	UPROPERTY()
 		float EnginePower = 0.0f;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gears")
+	UPROPERTY()
 		int32 CurrentGear = 1;
-	// UPROPERTY(BlueprintReadOnly, Category = "Engine")
+	UPROPERTY()
 		float EngineRPM = 0.0f;
-	// UPROPERTY(BlueprintReadOnly, Category = "Engine")
+	UPROPERTY()
 		bool bBraking = false;
-	// UPROPERTY(BlueprintReadOnly, Category = "Engine")
+	UPROPERTY()
 		bool bInReverse = false;
 
-	//friend class UCarStatics;
-	//friend class ASimpleCar;
+	friend class UCarStatics;
+	friend class ASimpleCar;
 
 };
 
-//USTRUCT(BlueprintType, Category = "Engine|Setup", meta = (DisplayName = "Car Engine Setup"))
-USTRUCT()
+USTRUCT(BlueprintType, Category = "Engine", meta = (DisplayName = "Car Engine Setup"))
 struct FCarEngineSetup
 {
 	GENERATED_BODY()
-//protected:
+protected:
 
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
 		float EnginePowerScale = 1.0f;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
 		float EngineIdleRPM = 1000.0f;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
 		float EngineMaxRPM = 7000.0f;
-	// UPROPERTY(EditDefaultsOnly, Category = "Engine")
-		UCurveFloat* TorqueCurve;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+
+	/** Damage zone RPM */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
 		float RedLineRPM = 6000.0f;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+
+	UPROPERTY(EditDefaultsOnly, Category = "Engine")
+		UCurveFloat* TorqueCurve;
+
+	/** Automatic gear up shifting variables */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gears")
 		float GearUpRPM = 5200.0f;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+
+	/** Automatic gear down shifting variables */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gears")
 		float GearDownRPM = 2000.0f;
-	//mechanical/friction braking
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gears")
+	bool bAutomaticGears = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gears")
+		TArray<float> Gears;
+
+	/** mechanical/friction braking */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
 		float EngineBrake = 30.0f;
+
 	//brake force
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
 		float BrakeForce = 50000.0f;
 
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gears")
-		TArray<float> Gears;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gears")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gears")
 		float FinalGearRatio = 3.92;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gears")
-		bool bAutomaticGears = true;
 
 	/** todo : Set appart in a separate class */
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aerodynamic")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aerodynamic")
 		float AirResistance = 3.0f;
 
-	//friend class UCarStatics;
-	//friend class ASimpleCar;
+	friend class UCarStatics;
+	friend class ASimpleCar;
 };
 
-//USTRUCT(BlueprintType, Category = "Sound", meta = (DisplayName = "Car Sound Effect"))
-USTRUCT()
+USTRUCT(BlueprintType, Category = "Sound", meta = (DisplayName = "Car Sound Effect"))
 struct FCarEngineSound
 {
 	GENERATED_BODY()
 
-//protected:
+protected:
 	/** engine sound */
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EngineSound")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EngineSound")
 		USoundCue* EngineSound;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EngineSound")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EngineSound")
 		float EnginePitchMax = 1.5f;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EngineSound")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EngineSound")
 		float EnginePitchIdle = 1.0f;
 
-	//friend class UCarStatics;
-	//friend class ASimpleCar;
+	friend class UCarStatics;
+	friend class ASimpleCar;
 };
 
 //USTRUCT(BlueprintType, Category = "Wheels|Update", meta = (DisplayName = "Car Wheels Update"))
@@ -149,97 +161,101 @@ USTRUCT()
 struct FCarWheelsUpdate
 {
 	GENERATED_BODY()
-//protected:
+protected:
 
-	// UPROPERTY(BlueprintReadOnly, Category = "Wheels")
+	UPROPERTY()
 		TArray<FVector> WheelCenterLocation;
-
-	// UPROPERTY(BlueprintReadOnly, Category = "Wheels")
+	UPROPERTY()
 		TArray<FVector> TireHitLocation;
-
-	// UPROPERTY(BlueprintReadOnly, Category = "Grip")
+	UPROPERTY()
 		TArray<bool> bIsSliding;
-
-	// UPROPERTY(BlueprintReadOnly, Category = "Pitch")
+	UPROPERTY()
 		TArray<float> CurrentWheelPitch;
-
-	// UPROPERTY(BlueprintReadOnly, Category = "Pitch")
+	UPROPERTY()
 		float DeltaPitch = 0.0f;
-
-	// UPROPERTY(BlueprintReadOnly, Category = "Steering")
+	UPROPERTY()
 		TArray<float> CurrentAngle;
-
-	// UPROPERTY(BlueprintReadOnly, Category = "Transmission")
+	UPROPERTY()
 		float WheelRPM = 0.0f;
 
-	//friend class UCarStatics;
-	//friend class ASimpleCar;
+	friend class UCarStatics;
+	friend class ASimpleCar;
 
 };
 
-//USTRUCT(BlueprintType, Category = "Wheels|Setup", meta = (DisplayName = "Car Wheels Setup"))
-USTRUCT()
+USTRUCT(BlueprintType, Category = "Wheels|Setup", meta = (DisplayName = "Car Wheels Setup"))
 struct FCarWheelsSetup
 {
 	GENERATED_BODY()
 
-//protected :
-	//wheel radius
-	// UPROPERTY(EditAnywhere, Category = "Wheels")
+protected :
+	/**	wheel radius	*/
+	UPROPERTY(EditAnywhere, Category = "Wheels")
 		float Radius = 32.0f;
 
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
 		TArray<bool> bIsPowered;
 
-	//how fast visual wheels rotate
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
+	/**	how fast visual wheels rotate	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
 		float RotationAmount = -1.0f;
 
 	//for tire smoke ect
 
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
+	/**	Mimimum Slip Value at wich we're losing grip	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
 		float SlipThreshold = 140000.0f;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
-		float SmokeKickIn = 3.0f;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
 		float LongSlipThreshold = 100000.0f;
 
-	//grip
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grip")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
+		float SmokeKickIn = 3.0f;
+
+	/**
+	 *	BaseGrip
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grip")
 		float Grip = 1.0f;
-	//maximum weight/grip multiplier, cap for weight transfer formula. 
-	//1 = no effect, >1 = capped to MaxGrip x default Grip
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grip")
+
+	/**
+	 *	maximum weight/grip multiplier, cap for weight transfer formula. 
+	 *	1 = no effect, >1 = capped to MaxGrip x default Grip
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grip")
 		float MaxGrip = 2.0f;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grip")
+
+	/**
+	 *	maximum weight/grip multiplier for the lateral grip only, cap for weight transfer formula.
+	 *	1 = no effect, >1 = capped to MaxGrip x default Grip
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grip")
 		float MaxLatGrip = 2.0f;
 
 	//max steer angle
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering")
 		float SteerAngle = 45.0f;
 	//lerp speed of wheel steering
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering")
 		float SteerSpeed = 3.0f;
 
-	//friend class UCarStatics;
-	//friend class ASimpleCar;
+	friend class UCarStatics;
+	friend class ASimpleCar;
 };
 
 
 
-//USTRUCT(BlueprintType, Category = "Suspension", meta = (DisplayName = "Springs Configurations") )
-USTRUCT()
+USTRUCT(BlueprintType, Category = "Suspension", meta = (DisplayName = "Springs Configurations") )
 struct FSpringsLocation
 {
 	GENERATED_BODY()
 //protected:
-	// UPROPERTY()
+	UPROPERTY()
 		FVector2D Location;
 
-	// UPROPERTY()
+	UPROPERTY()
 		float FrontX;
 
-	// UPROPERTY()
+	UPROPERTY()
 		float BackX;
 
 public:
@@ -262,64 +278,58 @@ struct FCarSuspensionsUpdate
 {
 
 	GENERATED_BODY()
-//private:
+protected:
 
-	// UPROPERTY(BlueprintReadOnly, Category = "Suspension")
+	UPROPERTY()
 		TArray<bool> bOnGround;
-
-	// UPROPERTY(BlueprintReadOnly, Category = "Suspension")
+	UPROPERTY()
 		TArray<float> SpringLengthArray;
-
-	// UPROPERTY(BlueprintReadOnly, Category = "Suspension")
+	UPROPERTY()
 		FVector SpringLocation;
-	//trace start locations
-
-	// UPROPERTY(BlueprintReadOnly, Category = "Suspension")
+	/**	trace start locations	*/
+	UPROPERTY()
 		TArray<FVector> SuspForceLocation;
-
-	// UPROPERTY(BlueprintReadOnly, Category = "Suspension")
+	UPROPERTY()
 		TArray<FVector> SpringForceArray;
-
-
-	// UPROPERTY()
+	UPROPERTY()
 		TArray<float> PreviousPosition;
 
-	//friend class UCarStatics;
-	//friend class ASimpleCar;
+	friend class UCarStatics;
+	friend class ASimpleCar;
 
 };
 
-//USTRUCT(BlueprintType, Category = "Suspension|Setup", meta = (DisplayName = "Car Suspensions Setup"))
-USTRUCT()
+USTRUCT(BlueprintType, Category = "Suspension|Setup", meta = (DisplayName = "Car Suspensions Setup"))
 struct FCarSuspensionsSetup
 {
 	GENERATED_BODY()
-//protected:
-
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
+protected:
+	/**		*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float TraceLength = 60.0f;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float SpringValue = 800000.0f;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float MaxSpringValue = 1200000.0f;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float DamperValue = 1000.0f;
 
 
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FSpringsLocation SpringConfiguration;
 
-	// UPROPERTY(BlueprintReadOnly, Category = "Suspension")
+	/**	Spring base location  determined by */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 		TArray<FVector> SpringTopLocation;
 
-	//anti-roll
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
+	/**	anti-roll */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anti-roll")
 		float AntiRollFront = 0.7f;
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anti-roll")
 		float AntiRollBack = 0.6f;
 
-	//friend class UCarStatics;
-	//friend class ASimpleCar;
+	friend class UCarStatics;
+	friend class ASimpleCar;
 };
 
 

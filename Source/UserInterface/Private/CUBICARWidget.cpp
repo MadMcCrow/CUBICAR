@@ -21,5 +21,6 @@ void UCUBICARWidget::PostLoad()
 
 void UCUBICARWidget::BindDelegates()
 {
+
 }
 

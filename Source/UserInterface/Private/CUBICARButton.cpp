@@ -39,11 +39,11 @@ void UCUBICARButton::BindDelegates()
 	if (ButtonWidget)
 	{
 		ButtonWidget->OnClicked.Clear();
-		ButtonWidget->OnClicked.AddDynamic(this, &UCUBICARButton::OnClicked);
+		ButtonWidget->OnClicked.AddDynamic(this, &UCUBICARButton::Clicked);
 	}
 }
 
-void UCUBICARButton::OnClicked()
+void UCUBICARButton::Clicked()
 {
-	OnClickedDelegate.Broadcast();
+	OnClicked.Broadcast();
 }

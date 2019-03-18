@@ -32,7 +32,7 @@ public:
 protected:
 
 	virtual void PostLoad() override;
-
+	
 	UFUNCTION()
 		virtual void BindDelegates();
 

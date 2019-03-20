@@ -166,13 +166,13 @@ protected:
 	UFUNCTION()
 		void QuitGame();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 		void HostGame();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 		void FindGame();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 		void JoinGame();
 
 	//UPROPERTY(Transient)

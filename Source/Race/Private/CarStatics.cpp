@@ -30,6 +30,12 @@ int UCarStatics::GetEngine_intRPM(const FCarDashBoard& Infos)
 {
 	return FMath::FloorToInt(Infos.Engine_RPM);
 }
+
+FText UCarStatics::GetEngine_textRPM(const FCarDashBoard& Infos)
+{
+	return FText::AsNumber(FMath::FloorToInt(Infos.Engine_RPM));
+}
+
 int UCarStatics::GetTransmission_intGear(const FCarDashBoard& Infos)
 {
 	return Infos.Transmission_Gear;

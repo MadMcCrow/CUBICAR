@@ -3,6 +3,7 @@
 #include "SimpleCar.h"
 #include "CoreUObject.h"
 #include "Engine.h"
+#include "Race.h"
 #include "Engine/EngineTypes.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
@@ -111,11 +112,13 @@ ASimpleCar::ASimpleCar()
 
 	//engine sound
 	EngineAC = CreateDefaultSubobject<UAudioComponent>(TEXT("EngineAudio"));
-	//EngineAC->SetSound(EngineSound);
+	if (CarSound.EngineSound)
+		EngineAC->SetSound(CarSound.EngineSound);
 	EngineAC->SetupAttachment(GetMesh()); // AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepWorldTransform);
 
-	WheelsUpdate.WheelCenterLocation.Init(FVector(0.0f, 0.0f, 0.0f), 4);
-	WheelsUpdate.TireHitLocation.Init(FVector(0.0f, 0.0f, 0.0f), 4);
+
+
+
 	SuspensionsUpdate.SpringForceArray.Init(FVector(0.0f, 0.0f, 0.0f), 4);
 	//TireForceArray.Init(FVector(0.0f, 0.0f, 0.0f), 4);
 	//WheelForwardArray.Init(FVector(0.0f, 0.0f, 0.0f), 4);
@@ -128,11 +131,8 @@ ASimpleCar::ASimpleCar()
 
 	SuspensionsUpdate.bOnGround.Init(false, 4);
 	WheelsSetup.bIsPowered.Init(true, 4);
-	WheelsUpdate.bIsSliding.Init(false, 4);
 
-	WheelsUpdate.CurrentAngle.Init(0.0f, 4);
-
-	WheelsUpdate.CurrentWheelPitch.Init(0.0f, 4);
+	WheelsUpdate.Init();
 
 	//gear ratios
 	EngineSetup.Gears.Emplace(-2.90);//reverse
@@ -162,6 +162,13 @@ void ASimpleCar::BeginPlay()
 	if (GetMesh() != NULL) {
 		MainBodyInstance = GetMesh()->GetBodyInstance();
 	}
+
+	for (auto it : WheelArray)
+	{
+		it->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		if (WheelMesh)
+			it->SetStaticMesh(WheelMesh);
+	}
 }
 
 // Called every frame
@@ -169,7 +176,11 @@ void ASimpleCar::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (WheelArray.Num() == 0) { return; }
+	if (WheelArray.Num() == 0)
+	{
+		UE_LOG(LogRace, Error, TEXT("Wheel Array not set"));
+		return;
+	}
 
 	//work out wheel center locations from visiblemesh instead of physics body to avoid wheel lag
 	FTransform BodyTransform = GetMesh()->GetComponentTransform();
@@ -181,59 +192,81 @@ void ASimpleCar::Tick(float DeltaTime)
 
 	for (int32 b = 0; b < WheelArray.Num(); b++)
 	{
+		// Store SpringTopLocation
+		FVector SpringTopLocation = FVector();
+
+		if (SuspensionsSetup.SpringTopLocation.IsValidIndex(b))
+			SpringTopLocation = SuspensionsSetup.SpringTopLocation[b];
+
 		// Calculate suspension location
-		FVector SuspensionLocation = BodyLocation + BodyForwardVector * SuspensionsSetup.SpringTopLocation[b].X + BodyRightVector * SuspensionsSetup.SpringTopLocation[b].Y + BodyUpVector * SuspensionsSetup.SpringTopLocation[b].Z;
-		FVector TempVel = MainBodyInstance->GetUnrealWorldVelocityAtPoint(SuspensionLocation);
+		FVector SuspensionLocation = BodyLocation + BodyForwardVector * SpringTopLocation.X + BodyRightVector * SpringTopLocation.Y + BodyUpVector * SpringTopLocation.Z;
+		
+		FVector TempVel(0.f);
+		if(MainBodyInstance)
+			TempVel = MainBodyInstance->GetUnrealWorldVelocityAtPoint(SuspensionLocation);
 
-		if (WheelsUpdate.WheelCenterLocation)
-		if(WheelsUpdate.WheelCenterLocation.Num()<4)
-			if(WheelsUpdate.WheelCenterLocation.IsValidIndex(b))
-				if(SuspensionsUpdate.SpringLengthArray.IsValidIndex(b))
-				WheelsUpdate.WheelCenterLocation[b] = SuspensionLocation - (BodyUpVector * (SuspensionsUpdate.SpringLengthArray[b] - WheelsSetup.Radius));
+		int WheelsNum = WheelsUpdate.WheelCenterLocation.Num();
 
-		// Calculate wheel forward vector
-		FVector WheelForward = BodyForwardVector.RotateAngleAxis(WheelsUpdate.CurrentAngle[b], BodyUpVector);
+		if (WheelsNum != 4)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("there are %d wheels"), WheelsNum);
+		}
 
-		// Calculate wheel speed along the wheel forward direction
-		float ForwardSpeed = FVector::DotProduct(WheelForward, TempVel);
 
-		// Calculate delta rotation for this wheel
-		WheelsUpdate.DeltaPitch = -ForwardSpeed * WheelsSetup.RotationAmount*DeltaTime;
+			// Safety before all
+			if (!WheelsUpdate.WheelCenterLocation.IsValidIndex(b) || 
+				!SuspensionsUpdate.SpringLengthArray.IsValidIndex(b) || 
+				!WheelsUpdate.CurrentAngle.IsValidIndex(b) ||
+				!WheelsUpdate.bIsSliding.IsValidIndex(b)||
+				!WheelsUpdate.CurrentWheelPitch.IsValidIndex(b) ||
+				!WheelArray.IsValidIndex(b))
+			{
+				UE_LOG(LogRace, Error, TEXT("Array are not sete with enough wheels"));
+				break; // we should not move further
+			}
+	
 
-		// Apply wheel delta rotation to the current rotation
-		WheelsUpdate.CurrentWheelPitch[b] -= WheelsUpdate.DeltaPitch;
+			WheelsUpdate.WheelCenterLocation[b] = SuspensionLocation - (BodyUpVector * (SuspensionsUpdate.SpringLengthArray[b] - WheelsSetup.Radius));
+				
 
-		if (WheelArray[b]) {
+			// Calculate wheel forward vector
+			FVector WheelForward = BodyForwardVector.RotateAngleAxis(WheelsUpdate.CurrentAngle[b], BodyUpVector);
+			// Calculate wheel speed along the wheel forward direction
+			float ForwardSpeed = FVector::DotProduct(WheelForward, TempVel);
+
+			// Calculate delta rotation for this wheel
+			WheelsUpdate.DeltaPitch = -ForwardSpeed * WheelsSetup.RotationAmount*DeltaTime;
+
+			// Apply wheel delta rotation to the current rotation
+			WheelsUpdate.CurrentWheelPitch[b] -= WheelsUpdate.DeltaPitch;
+
+					//tire smoke
+			if (WheelsUpdate.bIsSliding[b]) {
+				//spawn smoke particle
+				SpawnSmokeEffect(b);
+				UpdateWheelEffects(DeltaTime, b);
+				//reset sliding
+				WheelsUpdate.bIsSliding[b] = false;
+			}
+			else {
+				if (DustPSC[b]) {
+					DustPSC[b]->SetActive(false);
+					DustPSC[b]->bAutoDestroy = true;
+				}
+
+			}
+		
 			//rotate/locate wheel meshes
 			WheelArray[b]->SetWorldLocation(WheelsUpdate.WheelCenterLocation[b]);
 			WheelArray[b]->SetRelativeRotation(FRotator(WheelsUpdate.CurrentWheelPitch[b], WheelsUpdate.CurrentAngle[b], 0.0f));
-		}
-
-		//tire smoke
-		if (WheelsUpdate.bIsSliding[b]) {
-			//spawn smoke particle
-			SpawnSmokeEffect(b);
-			UpdateWheelEffects(DeltaTime, b);
-			//reset sliding
-			WheelsUpdate.bIsSliding[b] = false;
-		}
-		else {
-			if (DustPSC[b]) {
-				DustPSC[b]->SetActive(false);
-				DustPSC[b]->bAutoDestroy = true;
-			}
-
-		}
-
-
-		/**DrawDebugLine(
-		GetWorld(),
-		SuspensionLocation,
-		WheelCenterLocation[b],
-		FColor(255, 0, 0),
-		false, -1, 0,
-		12.333
-		);*/
+			/**DrawDebugLine(
+			GetWorld(),
+			SuspensionLocation,
+			WheelCenterLocation[b],
+			FColor(255, 0, 0),
+			false, -1, 0,
+			12.333
+			);*/
 	}
 
 
@@ -665,8 +698,10 @@ float ASimpleCar::GetPowerToWheels(float DeltaTime, FBodyInstance* BodyInstance)
 	}
 
 	//get power from torque curve
-	EngineUpdate.AvailablePower = EngineSetup.TorqueCurve->GetFloatValue(EngineUpdate.EngineRPM);
+	if (EngineSetup.TorqueCurve)
+		EngineUpdate.AvailablePower = EngineSetup.TorqueCurve->GetFloatValue(EngineUpdate.EngineRPM);
 	//go through the gearbox
+	if (WheelsSetup.Radius!=0.f)
 	EngineUpdate.EnginePower = EngineUpdate.AvailablePower * EngineSetup.Gears[EngineUpdate.CurrentGear] * EngineSetup.FinalGearRatio * 0.7 / (WheelsSetup.Radius*0.1);
 	//newton/unreal conversion
 	EngineUpdate.EnginePower *= 100;

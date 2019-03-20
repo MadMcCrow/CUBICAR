@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "CarStatics.generated.h"
 
+struct FCarSuspensionsSetup;
 class USoundCue;
 class UCurveFloat;
 class UParticleSystem;
@@ -13,12 +14,12 @@ class UParticleSystem;
  *	@struct FCarDashBoard
  *	Car values showed during game play
  */
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FCarDashBoard
 {
 	GENERATED_BODY()
 
-protected:
+private:
 
 	UPROPERTY()
 		float Speed_KPH;
@@ -31,9 +32,7 @@ protected:
 
 	UPROPERTY()
 		bool bIsInReverse;
-
-	friend class UCarStatics;
-	friend class ASimpleCar;
+	
 
 public:
 
@@ -41,6 +40,11 @@ public:
 		Speed_KPH(NewSpeed_KPH), Engine_RPM(NewEngine_RPM), Transmission_Gear(NewTransmissionGear), bIsInReverse(NewbIsInReverse)
 	{
 	}
+
+private :
+	friend class UCarStatics;
+	friend class ASimpleCar;
+
 };
 
 
@@ -133,6 +137,18 @@ protected:
 	/** todo : Set appart in a separate class */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aerodynamic")
 		float AirResistance = 3.0f;
+public:
+
+	FCarEngineSetup(): TorqueCurve(nullptr)
+	{
+		//gear ratios
+		Gears.Emplace(-2.90); //reverse
+		Gears.Emplace(2.66); //1st
+		Gears.Emplace(1.78);
+		Gears.Emplace(1.30);
+		Gears.Emplace(1.0);
+		Gears.Emplace(0.74); //5th
+	}
 
 	friend class UCarStatics;
 	friend class ASimpleCar;
@@ -161,7 +177,7 @@ USTRUCT()
 struct FCarWheelsUpdate
 {
 	GENERATED_BODY()
-protected:
+private:
 
 	UPROPERTY()
 		TArray<FVector> WheelCenterLocation;
@@ -178,6 +194,28 @@ protected:
 	UPROPERTY()
 		float WheelRPM = 0.0f;
 
+public:
+
+	void Add(FVector NewCenterLocation = FVector(0.f), FVector NewTireHitLocation = FVector(0.f), float NewCurrentWheelPitch = 0.f, bool NewbIsSliding = false, float NewCurrentAngle = 0.f)
+	{
+		WheelCenterLocation.Add(NewCenterLocation);
+		TireHitLocation.Add(NewTireHitLocation);
+		bIsSliding.Add(NewbIsSliding);
+		CurrentWheelPitch.Add(NewCurrentWheelPitch);
+		CurrentAngle.Add(NewCurrentAngle);
+	}
+
+	void Init()
+	{
+
+		WheelCenterLocation.Init(FVector(0.0f, 0.0f, 0.0f), 4);
+		TireHitLocation.Init(FVector(0.0f, 0.0f, 0.0f), 4);
+		bIsSliding.Init(false, 4);
+		CurrentAngle.Init(0.0f, 4);
+		CurrentWheelPitch.Init(0.0f, 4);
+	}
+
+private :
 	friend class UCarStatics;
 	friend class ASimpleCar;
 
@@ -248,27 +286,45 @@ USTRUCT(BlueprintType, Category = "Suspension", meta = (DisplayName = "Springs C
 struct FSpringsLocation
 {
 	GENERATED_BODY()
-//protected:
-	UPROPERTY()
-		FVector2D Location;
+protected:
 
-	UPROPERTY()
-		float FrontX;
+	UPROPERTY(EditDefaultsOnly)
+		float ZFront;
 
-	UPROPERTY()
-		float BackX;
+	UPROPERTY(EditDefaultsOnly)
+		float ZBack;
+
+	UPROPERTY(EditDefaultsOnly)
+		float YFront;
+
+	UPROPERTY(EditDefaultsOnly)
+		float YBack;
+
+	UPROPERTY(EditDefaultsOnly)
+		float XFront;
+
+	UPROPERTY(EditDefaultsOnly)
+		float XBack;
 
 public:
 	FVector GetLocation(bool bIsFront, bool bIsLeft)
 	{
-		const float x = bIsFront ? FrontX : BackX;
+		const float x = bIsFront ? XFront : XBack;
+		const float y = bIsFront ? YFront : YBack;
+		const float z = bIsFront ? ZFront : ZBack;
 		const float sign = bIsLeft ? -1 : 1;
-		return FVector(x, Location.X * sign, Location.Y);
+		return {x, y * sign, z};
 	}
 
-	FSpringsLocation(FVector2D NewLocation = FVector2D(), float NewFrontX = 120, float NewBackX = -120) : Location(NewLocation), FrontX(NewFrontX), BackX(NewBackX)
+	FSpringsLocation(float NewZFront = 20.f, float NewZBack = 20.f, float NewYFront = 90.f, float NewYBack = -90.f,
+	                 float NewXFront = 120, float NewXBack = -120) : ZFront(NewZFront), ZBack(NewZBack),
+	                                                                 YFront(NewYFront), YBack(NewYBack),
+	                                                                 XFront(NewXFront), XBack(NewXBack)
 	{
 	}
+
+	friend FCarSuspensionsSetup;
+
 };
 
 
@@ -299,7 +355,7 @@ protected:
 
 };
 
-USTRUCT(BlueprintType, Category = "Suspension|Setup", meta = (DisplayName = "Car Suspensions Setup"))
+USTRUCT(BlueprintType, Category = "Suspension", meta = (DisplayName = "Car Suspensions Setup"))
 struct FCarSuspensionsSetup
 {
 	GENERATED_BODY()
@@ -338,31 +394,34 @@ protected:
 /**
  * 
  */
-UCLASS()
-class RACE_API UCarStatics : public UObject //UBlueprintFunctionLibrary
+UCLASS(Category = "Car")
+class RACE_API UCarStatics : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
 public :
-	UFUNCTION()
+	UFUNCTION(BlueprintPure, Category ="Dashboard|Speed", meta = (DisplayName = "Speed in Kilometer per hour"))
 		static float GetSpeed_KPH(const FCarDashBoard &Infos);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintPure, Category = "Dashboard|Speed", meta = (DisplayName = "Speed in Kilometer per hour clamped"))
 		static int GetSpeed_intKPH(const FCarDashBoard &Infos);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintPure, Category = "Dashboard|Speed", meta = (DisplayName = "speed in Kilometers per hour clamped as text"))
 		static FText GetSpeed_textKPH(const FCarDashBoard &Infos);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintPure, Category = "Dashboard|Engine", meta = (DisplayName = "Engine rotation speed in Round per minutes"))
 		static float GetEngine_RPM(const FCarDashBoard  &Infos);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintPure, Category = "Dashboard|Engine", meta = (DisplayName = "Engine rotation speed in Round per minutes clamped"))
 		static int GetEngine_intRPM(const FCarDashBoard  &Infos);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintPure, Category = "Dashboard|Engine", meta = (DisplayName = "Engine rotation speed in Round per minutes clamped as text"))
+		static FText GetEngine_textRPM(const FCarDashBoard  &Infos);
+
+	UFUNCTION(BlueprintPure, Category = "Dashboard|Transmission", meta = (DisplayName = "Gear as a number"))
 		static int GetTransmission_intGear(const FCarDashBoard  &Infos);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintPure, Category = "Dashboard|Transmission", meta = (DisplayName = "Gear as text"))
 		static FText GetTransmission_textGear(const FCarDashBoard  &Infos);
 
 	

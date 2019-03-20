@@ -73,13 +73,13 @@ protected:
 
 private :
 	//wheel meshes
-	UPROPERTY() // Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY( Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UStaticMeshComponent* Wheel0;
-	UPROPERTY() //Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY( Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UStaticMeshComponent* Wheel1;
-	UPROPERTY() // Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY( Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UStaticMeshComponent* Wheel2;
-	UPROPERTY() // Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY( Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UStaticMeshComponent* Wheel3;
 
 	TArray<UStaticMeshComponent *> WheelArray;
@@ -153,7 +153,7 @@ public:
 
 	// Car Audio		---------------------------------------------------------------------- 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup|Sound|Engine")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect|Sound|Engine")
 		FCarEngineSound CarSound;
 
 private:
@@ -166,37 +166,35 @@ protected :
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup|Engine")
 	FCarEngineSetup EngineSetup;
 
-	UPROPERTY()
 	FCarEngineUpdate EngineUpdate;
 
 	// Car Wheels		---------------------------------------------------------------------- 
-protected :
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup|Wheels")
 		FCarWheelsSetup WheelsSetup;
 
-	UPROPERTY()
-		FCarWheelsUpdate WheelsUpdate;
+	FCarWheelsUpdate WheelsUpdate;
 
 	// Car Suspensions	---------------------------------------------------------------------- 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup|Suspension")
 		FCarSuspensionsSetup SuspensionsSetup;
 
-	UPROPERTY()
-		FCarSuspensionsUpdate SuspensionsUpdate;
+	FCarSuspensionsUpdate SuspensionsUpdate;
 
 protected:
 
 	// Car Effects		---------------------------------------------------------------------- 
 
 	/** skid sound loop */
-	UPROPERTY(Category = Effects, EditDefaultsOnly)
+	UPROPERTY(Category = "Effect|Sound", EditDefaultsOnly)
 		USoundCue* SkidSound;
+	
 
 	//tire smoke
-	UPROPERTY(EditAnywhere, Category = "Wheels")
+	UPROPERTY(Category = "Effect|Particle", EditAnywhere)
 		UParticleSystem* TireSmoke;
-	UPROPERTY(EditAnywhere, Category = "Wheels")
+	UPROPERTY(Category = "Effect|Particle", EditAnywhere)
 		UParticleSystem* TireMarks;
 
 	/** dust FX components */

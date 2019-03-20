@@ -60,7 +60,7 @@ void UCUBICARGameInstance::QuitGame()
 
 // ------------------------ Network exposed function
 
-void UCUBICARGameInstance::HostGame()
+void UCUBICARGameInstance::HostGame_Implementation()
 {
 	// Creating a local player where we can get the UserID from
 	ULocalPlayer* const Player = GetFirstGamePlayer();
@@ -75,7 +75,7 @@ void UCUBICARGameInstance::HostGame()
 }
 
 
-void UCUBICARGameInstance::FindGame()
+void UCUBICARGameInstance::FindGame_Implementation()
 {
 	ULocalPlayer* const Player = GetFirstGamePlayer();
 	FindSessions(Player->GetPreferredUniqueNetId().GetUniqueNetId(), bIsSearchOnLan, true);
@@ -117,7 +117,7 @@ void UCUBICARGameInstance::RequestJoinGame(const FServerStatus& SessionToJoin)
 	PlayerJoinRequestBinding.Broadcast();
 }
 
-void UCUBICARGameInstance::JoinGame()
+void UCUBICARGameInstance::JoinGame_Implementation()
 {
 	JoinOnlineSession(RequestSession.UserId, FName(*RequestSession.SessionName), *RequestSession.SessionSearchResult);
 }

@@ -1,107 +1,66 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
-#include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-#include "CarStatics.h"
+#include "Components/AudioComponent.h"
 #include "PhysicsEngine/PhysicsAsset.h"
 #include "SimpleCar.generated.h"
 
-
-
-class UAudioComponent;
-class USkeletalMeshComponent;
-class UArrowComponent;
-class UStaticMeshComponent;
-class USoundCue;
 class USpringArmComponent;
+class UStaticMesh;
 class UCameraComponent;
-class UCurveFloat;
 class UParticleSystemComponent;
-
-
-
+class USoundCue;
 
 UCLASS()
 class RACE_API ASimpleCar : public APawn
 {
 	GENERATED_BODY()
 
-public:
-	// Sets default values for this pawn's properties
-	ASimpleCar();
-
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	// Called every frame
-	virtual void Tick(float DeltaSeconds) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
-
-
-
-private :
-#if WITH_EDITOR
-	//UPROPERTY( Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		UArrowComponent* Arrow0;
-	//UPROPERTY( Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		UArrowComponent* Arrow1;
-	//UPROPERTY( Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		UArrowComponent* Arrow2;
-	//UPROPERTY( Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		 UArrowComponent* Arrow3;
-
-	//arrow array
-	//UPROPERTY(EditAnywhere, Category = VehicleSetup)
-		TArray<UArrowComponent*> ArrowArray;
-
-#endif // WITH_EDITOR
-
-	/**  The main skeletal mesh associated with this Vehicle */
-	UPROPERTY(Category = "Vehicle", VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		USkeletalMeshComponent* Mesh;
-
-
-	// Car Wheels Components	---------------------------------------------------------------------- 
 protected:
 
-	UPROPERTY(Category = "Vehicle", EditDefaultsOnly, BlueprintReadOnly) //,meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly)
 		UStaticMesh * WheelMesh;
 
-private :
+private:
+	/**  The main skeletal mesh associated with this Vehicle */
+	UPROPERTY(Category = Vehicle, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+		class USkeletalMeshComponent* Mesh;
+
 	//wheel meshes
-	UPROPERTY( Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		UStaticMeshComponent* Wheel0;
-	UPROPERTY( Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		UStaticMeshComponent* Wheel1;
-	UPROPERTY( Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		UStaticMeshComponent* Wheel2;
-	UPROPERTY( Category = VehicleSetup, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		UStaticMeshComponent* Wheel3;
+	UPROPERTY()
+		class UStaticMeshComponent* Wheel0;
+	UPROPERTY()
+		class UStaticMeshComponent* Wheel1;
+	UPROPERTY()
+		class UStaticMeshComponent* Wheel2;
+	UPROPERTY()
+		class UStaticMeshComponent* Wheel3;
 
-	TArray<UStaticMeshComponent *> WheelArray;
+	//wheel array
+	UPROPERTY(BlueprintReadOnly, Category = VehicleSetup, meta = (AllowPrivateAccess = "true"))
+		TArray<UStaticMeshComponent*> WheelArray;
 
-protected :
+	//private:
+		/** audio component for engine sounds */
+	UPROPERTY(Category = Effects, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+		UAudioComponent* EngineAC;
 
-	UFUNCTION(BlueprintPure)
-		TArray<UStaticMeshComponent *> GetWheelArray();
-
-
-
-	// Car Physics	----------------------------------------------------------------------
 private:
 	FCalculateCustomPhysics OnCalculateCustomPhysics;
-
 	void CustomPhysics(float DeltaTime, FBodyInstance* BodyInstance);
 	FHitResult Trace(FVector TraceStart, FVector TraceDirection);
 	FBodyInstance *MainBodyInstance;
 
+	UPROPERTY()
+		TArray<float> PreviousPosition;
 
-	// Car Camera	----------------------------------------------------------------------
-private :
+	UPROPERTY()
+		FVector ArrowLocation;
+
+public:
+	// Sets default values for this pawn's properties
+	ASimpleCar();
+	
 	/** Spring arm that will offset the camera */
 	UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		USpringArmComponent* SpringArm;
@@ -110,12 +69,19 @@ private :
 	UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UCameraComponent* Camera;
 
-protected :
-
 	/** Name of the MeshComponent. Use this name if you want to prevent creation of the component (with ObjectInitializer.DoNotCreateDefaultSubobject). */
 	static FName VehicleMeshComponentName;
 
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+	// Called every frame
+	virtual void Tick(float DeltaSeconds) override;
+
 	void SpawnSmokeEffect(int WheelIndex);
+
+	// Called to bind functionality to input
+	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
 	/** Handle pressing forwards */
 	void MoveForward(float Val);
@@ -135,81 +101,196 @@ protected :
 	float GetPowerToWheels(float DeltaTime, FBodyInstance* BodyInstance);
 
 	void SpawnNewWheelEffect(int WheelIndex);
-
 	/** update effects under wheels */
 	void UpdateWheelEffects(float DeltaTime, int32 Index);
 
+	//// vars /////////
+	///////////////////
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
+		float TraceLength = 60.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
+		float SpringValue = 800000.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
+		float MaxSpringValue = 1200000.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
+		float DamperValue = 1000.0f;
 
-	// Car Dashboard	----------------------------------------------------------------------
+	UPROPERTY(BlueprintReadOnly, Category = "Suspension")
+		TArray<bool> bOnGround;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Suspension")
+		TArray<float> SpringLengthArray;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Suspension")
+		FVector SpringLocation;
+
+	//trace start locations
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
+		TArray<FVector> SpringTopLocation;
+	UPROPERTY(BlueprintReadOnly, Category = "Suspension")
+		TArray<FVector> SuspForceLocation;
+	UPROPERTY(BlueprintReadOnly, Category = "Suspension")
+		TArray<FVector> SpringForceArray;
+
+	//anti-roll
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
+		float AntiRollFront = 0.7f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
+		float AntiRollBack = 0.6f;
+
+	//engine --------------- 
+	/** engine sound */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EngineSound")
+		USoundCue* EngineSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EngineSound")
+		float EnginePitchMax = 1.5f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EngineSound")
+		float EnginePitchIdle = 1.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+		float EnginePower = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+		float EnginePowerScale = 1.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+		float WastedPower = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+		float EngineIdleRPM = 1000.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+		float EngineMaxRPM = 7000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+		float AirResistance = 3.0f;
 
 
-protected:
-	UPROPERTY(Transient)
-		FCarDashBoard Dashboard;
+	UPROPERTY(EditDefaultsOnly, Category = "Engine")
+		UCurveFloat* TorqueCurve;
+	UPROPERTY(BlueprintReadOnly, Category = "Engine")
+		float Throttle = 0.0f;
+	UPROPERTY(BlueprintReadOnly, Category = "Engine")
+		bool bClutchEngaged = false;
+	UPROPERTY(BlueprintReadOnly, Category = "Engine")
+		float CurrentPower = 0.0f;
+	UPROPERTY(BlueprintReadOnly, Category = "Engine")
+		float AvailablePower = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+		float RedLineRPM = 6000.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+		float GearUpRPM = 5200.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+		float GearDownRPM = 2000.0f;
+	//mechanical/friction braking
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+		float EngineBrake = 30.0f;
+	//brake force
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
+		float BrakeForce = 50000.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gears")
+		TArray<float> Gears;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gears")
+		int32 CurrentGear = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gears")
+		float FinalGearRatio = 3.92;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gears")
+		bool bAutomaticGears = true;
+	UPROPERTY(BlueprintReadOnly, Category = "Engine")
+		float EngineRPM = 0.0f;
+	UPROPERTY(BlueprintReadOnly, Category = "Engine")
+		float WheelRPM = 0.0f;
 
-public:
+	UPROPERTY(BlueprintReadOnly, Category = "Engine")
+		bool bBraking = false;
+	UPROPERTY(BlueprintReadOnly, Category = "Engine")
+		bool bInReverse = false;
 
-	FCarDashBoard GetCarDashboard() const { return Dashboard; }
+	//for visual speed indicator
+	UPROPERTY(BlueprintReadOnly, Category = "Engine")
+		float SpeedKPH = 0.0f;
+	UPROPERTY(BlueprintReadOnly, Category = "Engine")
+		int32 SpeedKPH_int = 0;
 
-	// Car Audio		---------------------------------------------------------------------- 
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect|Sound|Engine")
-		FCarEngineSound CarSound;
+	//wheel bones
+	//UPROPERTY(EditAnywhere, Category = "Wheels")
+	//	TArray<FName> BoneNames;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
+		TArray<bool> bIsPowered;
+	//steering
+	UPROPERTY(BlueprintReadOnly, Category = "Wheels")
+		TArray<FVector> WheelCenterLocation;
+	UPROPERTY(BlueprintReadOnly, Category = "Wheels")
+		TArray<FVector> TireHitLocation;
+	//how fast visual wheels rotate
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
+		float RotationAmount = -1.0f;
+	UPROPERTY(BlueprintReadOnly, Category = "Wheels")
+		TArray<float> CurrentWheelPitch;
+	UPROPERTY(BlueprintReadOnly, Category = "Wheels")
+		float DeltaPitch = 0.0f;
 
-private:
-	/** audio component for engine sounds */
-	UPROPERTY(Category = "Sound", BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		UAudioComponent* EngineAC;
-
-	// Car Engine		---------------------------------------------------------------------- 
-protected :
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup|Engine")
-	FCarEngineSetup EngineSetup;
-
-	FCarEngineUpdate EngineUpdate;
-
-	// Car Wheels		---------------------------------------------------------------------- 
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup|Wheels")
-		FCarWheelsSetup WheelsSetup;
-
-	FCarWheelsUpdate WheelsUpdate;
-
-	// Car Suspensions	---------------------------------------------------------------------- 
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup|Suspension")
-		FCarSuspensionsSetup SuspensionsSetup;
-
-	FCarSuspensionsUpdate SuspensionsUpdate;
-
-protected:
-
-	// Car Effects		---------------------------------------------------------------------- 
-
-	/** skid sound loop */
-	UPROPERTY(Category = "Effect|Sound", EditDefaultsOnly)
-		USoundCue* SkidSound;
-	
+	//for tire smoke ect
+	UPROPERTY(BlueprintReadOnly, Category = "Wheels")
+		TArray<bool> bIsSliding;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
+		float SlipThreshold = 140000.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
+		float SmokeKickIn = 3.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
+		float LongSlipThreshold = 100000.0f;
+	//grip
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
+		float Grip = 1.0f;
+	//maximum weight/grip multiplier, cap for weight transfer formula. 
+	//1 = no effect, >1 = capped to MaxGrip x default Grip
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
+		float MaxGrip = 2.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
+		float MaxLatGrip = 2.0f;
+	//unused
+	//UPROPERTY(EditAnywhere, Category = "Wheels")
+	//	float MaxLatGrip = 50000;
+	//unused
+	//UPROPERTY(EditAnywhere, Category = "Wheels")
+	//	float MaxLongGrip = 50000;
+	//
+	UPROPERTY(BlueprintReadOnly, Category = "Wheels")
+		TArray<FVector> TireForceArray;
+	UPROPERTY(BlueprintReadOnly, Category = "Wheels")
+		TArray<FVector> WheelForwardArray;
+	UPROPERTY(BlueprintReadOnly, Category = "Wheels")
+		TArray<FVector> WheelRightArray;
 
 	//tire smoke
-	UPROPERTY(Category = "Effect|Particle", EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Wheels")
 		UParticleSystem* TireSmoke;
-	UPROPERTY(Category = "Effect|Particle", EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Wheels")
 		UParticleSystem* TireMarks;
-
 	/** dust FX components */
 	UPROPERTY(Transient)
 		UParticleSystemComponent* DustPSC[4];
 
+	/** skid sound loop */
+	UPROPERTY(Category = Effects, EditDefaultsOnly)
+		USoundCue* SkidSound;
 
-	// Getter functions	---------------------------------------------------------------------- 
+	//max steer angle
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering")
+		float SteerAngle = 45.0f;
+	UPROPERTY(BlueprintReadOnly, Category = "Steering")
+		TArray<float> CurrentAngle;
+	//lerp speed of wheel steering
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering")
+		float SteerSpeed = 3.0f;
+
+	//wheel radius
+	UPROPERTY(EditAnywhere, Category = "Wheels")
+		float Radius = 32.0f;
 
 	/** Returns Mesh subobject **/
 	class USkeletalMeshComponent* GetMesh() const;
 
+	//FORCEINLINE UPoseableMeshComponent* GetVisibleMesh() const {return VisibleMesh;}
 	/** Returns SpringArm subobject **/
 	FORCEINLINE USpringArmComponent* GetSpringArm() const { return SpringArm; }
 	/** Returns Camera subobject **/
 	FORCEINLINE UCameraComponent* GetCamera() const { return Camera; }
 
 };
+

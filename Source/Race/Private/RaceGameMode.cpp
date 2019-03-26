@@ -1,33 +1,80 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "RaceGameMode.h"
-#include "RacingCar.h"
 #include "RacePlayerState.h"
 #include "RaceGameState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Checkpoint.h"
+#include "RaceStatics.h"
+#include "PitLanePosition.h"
 
 
 ARaceGameMode::ARaceGameMode() : Super()
 {
-	DefaultPawnClass = ARacingCar::StaticClass();
 	GameStateClass =   ARaceGameState::StaticClass();
 	PlayerStateClass = ARacePlayerState::StaticClass();
 }
 
+void ARaceGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+}
+
+void ARaceGameMode::PopulateTeams(const UDataTable* TeamsTable)
+{
+	URaceStatics::GetRaceGameState(this)->SetTeams(URaceStatics::GetStaticTeamData(TeamsTable));
+}
+
+void ARaceGameMode::PopulateItems(const UDataTable* ItemsTable)
+{
+
+}
+
 AActor* ARaceGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
-	const auto Start = Super::ChoosePlayerStart_Implementation(Player);
+	auto Start = Super::ChoosePlayerStart_Implementation(Player);
+	TArray<AActor *> actorpits;
+	UGameplayStatics::GetAllActorsOfClass(this, APitLanePosition::StaticClass(), actorpits);
+	TArray<APitLanePosition *> Pits = reinterpret_cast<TArray<APitLanePosition*>&>(actorpits);
+	Pits.Sort(&APitLanePosition::Sort);
+	for (auto it : Pits)
+		if (it->IsAvailable())
+			Start = it;
+
 	if (!Player)
 		return Start;
+
 	const auto PState = Cast<ARacePlayerState>(Player->PlayerState);
 	if (!PState)
 		return Start;
+
+	if (PState->GetShouldRestartAtPit())
+		return Start;
+
 	const auto CheckpointStart = PState->GetLastPassedCheckpoint();
 	if (!CheckpointStart)
 		return Start;
 	return CheckpointStart;
 }
+
+
+
+#if WITH_EDITOR
+
+
+void ARaceGameMode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	if (!URaceStatics::ValidateTeamDataTable(Teams))
+	{
+		Teams = nullptr;
+		UE_LOG(LogTemp, Warning, TEXT("Wrong Type"));
+	}
+}
+
+#endif // WITH_EDITOR
+
 
 
 void ARaceGameMode::UpdatesCheckpointList()
@@ -36,31 +83,7 @@ void ARaceGameMode::UpdatesCheckpointList()
 	UGameplayStatics::GetAllActorsOfClass(this, ACheckpoint::StaticClass(), Checkpoints);
 	
 	MapCheckpoints= reinterpret_cast<TArray<ACheckpoint*>&>(Checkpoints);
-	//Stupid iteration to cast and add
-	/*
-	for (auto it : Checkpoints)
-		MapCheckpoints.Add(static_cast<ACheckpoint*>(it));
-	*/
-	/*
-	// Sort the checkpoints by index
-	MapCheckpoints.Sort([](const ACheckpoint& A, const ACheckpoint& B) // Sort Checkpoints by Index
-	{
-		return A.GetIndex() < B.GetIndex();
-	});
-	*/
+	
 	MapCheckpoints.Sort(&ACheckpoint::SortCheckpoint);
-	TArray<AActor *> Starts;
-	UGameplayStatics::GetAllActorsOfClass(this, AStartPoint::StaticClass(),Starts);
-
-	if (Starts.Num() >= 1)
-	{
-		RaceStart = Cast<APlayerStart>(Starts[0]);
-	}
-	else
-	{
-		const auto PC = UGameplayStatics::GetPlayerController(this, 0);
-		if (PC)
-			RaceStart = Cast<APlayerStart>(ChoosePlayerStart(PC));
-	}
 
 }

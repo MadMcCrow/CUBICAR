@@ -1,7 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "RaceWidget.h"
-#include "RacingCar.h"
 
 
 FText URaceWidget::GetSpeedText() const
@@ -11,8 +10,8 @@ FText URaceWidget::GetSpeedText() const
 
 float URaceWidget::GetSpeed() const
 {
-	const auto Car = Cast<ARacingCar>(GetOwningPlayerPawn());
-	if (!Car)
+	//const auto Car = Cast<ARacingCar>(GetOwningPlayerPawn());
+	//if (!Car)
 		return 0.f;
-	return FMath::RoundHalfToZero(Car->GetVelocity().Size());
+	//return FMath::RoundHalfToZero(Car->GetVelocity().Size());
 }

@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "RaceStatics.h"
 #include "RacePlayerState.generated.h"
+
 
 
 class ACheckpoint;
@@ -13,7 +15,7 @@ class ACheckpoint;
 /**
  *	Simplified Time Date Structure
  */
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FCheckpointScore
 {
 	GENERATED_BODY()
@@ -49,14 +51,18 @@ class ARacePlayerState : public APlayerState
 {
 	GENERATED_BODY()
 
+
 private :
 
 	virtual void ClientInitialize(AController* C) override;
 
 protected:
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Replicated)
 		TArray<FCheckpointScore> PassedCheckpoints;
+
+	UPROPERTY(BlueprintReadOnly, Replicated)
+		bool bShouldResetAtPit;
 
 public:
 
@@ -72,9 +78,24 @@ public:
 	UFUNCTION()
 		void OnPassedCheckpoint(ACheckpoint* PassedCheckpoint);
 
+	UFUNCTION(BlueprintPure)
+		FORCEINLINE bool GetShouldRestartAtPit() const { return bShouldResetAtPit; }
+
 private:
 
 	AController * OwningPlayer;
+
+protected:
+
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	UTeam * Team;
+
+
+public:
+
+	UTeam * GetTeam() const { return Team;}
+
+	void SetTeam( UTeam * const NewTeam) { Team = NewTeam; }
 
 	
 };

@@ -6,6 +6,7 @@
 #include "Race.h"
 #include "RaceGameState.h"
 #include "Checkpoint.h"
+#include "UnrealNetwork.h"
 
 ACheckpoint* ARacePlayerState::GetLastPassedCheckpoint()
 {
@@ -53,12 +54,14 @@ void ARacePlayerState::Server_PassedCheckpoint_Implementation(const AController*
 {
 	const auto GS = Cast<ARaceGameState>(UGameplayStatics::GetGameState(this));
 	PassedCheckpoints.Add(FCheckpointScore(PassedCheckpoint, GS->RaceTime()));
+	bShouldResetAtPit = false;
 }
 
 void ARacePlayerState::ClientInitialize(AController* C)
 {
 	Super::ClientInitialize(C);
 	OwningPlayer = C;
+	bShouldResetAtPit = true;
 }
 
 void ARacePlayerState::NotifyPassedCheckpoint() const
@@ -72,4 +75,11 @@ void ARacePlayerState::OnPassedCheckpoint(ACheckpoint* PassedCheckpoint)
 
 	if(OwningPlayer)
 		Server_PassedCheckpoint(OwningPlayer, PassedCheckpoint);
+}
+
+void ARacePlayerState::GetLifetimeReplicatedProps(class TArray<class FLifetimeProperty, class FDefaultAllocator> & OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ARacePlayerState, bShouldResetAtPit);
+	DOREPLIFETIME(ARacePlayerState, PassedCheckpoints);
 }

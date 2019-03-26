@@ -423,6 +423,5 @@ public :
 
 	UFUNCTION(BlueprintPure, Category = "Dashboard|Transmission", meta = (DisplayName = "Gear as text"))
 		static FText GetTransmission_textGear(const FCarDashBoard  &Infos);
-
 	
 };

@@ -23,7 +23,8 @@
 				"Engine",
 				"PhysXVehicles",
 				"CUBICAR",
-				"UMG"
+				"UMG",
+				"CoreUObject"
 			]
 		},
 		{

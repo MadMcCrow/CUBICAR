@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
+#include "RaceStatics.h"
 #include "RaceGameMode.generated.h"
 
 
 class UDataTable;
 class ACheckpoint;
 class ALapStart;
-
 
 /**
  *  Base Game mode for the Races
@@ -25,6 +25,7 @@ public:
 
 
 	virtual void BeginPlay() override;
+
 
 protected:
 
@@ -46,9 +47,12 @@ protected:
 
 	AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 
-
+public:
 	UFUNCTION(BlueprintPure)
 		ALapStart * GetRaceStart() const { return RaceStart; }
+
+	UFUNCTION(BlueprintPure)
+		int32 GetCheckpointsNum() const { return MapCheckpoints.Num(); }
 
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Checkpoint", meta = (DisplayName = "Checkpoints On Map"))
@@ -67,5 +71,44 @@ public:
 
 private:
 	void UpdatesCheckpointList();
+	
+public:
+
+	UFUNCTION(BlueprintCallable, Category = "Score")
+		FRaceScore CalculateScore(AController* controller) const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Score")
+	float CalculateDriftScore(AController* controller) const;
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Score")
+	float CalculateTimeScore(AController* controller) const;
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Score")
+	float CalculateCharismaScore(AController* controller) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Score")
+		FRaceScore CalculateLapScore(AController* controller) const;
+
+protected:
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Score")
+		int CharismaFactor = 100;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Score")
+		int TimeFactor = 100;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Score")
+		int DriftFactor = 100;
+
+public :
+
+	UFUNCTION(BlueprintPure, Category = "Score")
+	int GetCharismaFactor() const { return CharismaFactor; }
+
+	UFUNCTION(BlueprintPure, Category = "Score")
+	int GetTimeFactor() const { return TimeFactor; }
+
+	UFUNCTION(BlueprintPure, Category = "Score")
+	int GetDriftFactor() const { return DriftFactor; }
+
 
  };

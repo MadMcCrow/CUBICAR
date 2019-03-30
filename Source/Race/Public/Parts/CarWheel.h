@@ -14,7 +14,7 @@ struct FWheelPart : public FPurchasableItem
 	GENERATED_BODY()
 protected:
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		UStaticMesh * Mesh;
 
 

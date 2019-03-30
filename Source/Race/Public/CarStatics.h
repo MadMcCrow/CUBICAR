@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "CarStatics.generated.h"
 
+class ARaceCar;
 struct FCarSuspensionsSetup;
 class USoundCue;
 class UCurveFloat;
@@ -40,6 +41,10 @@ public:
 		Speed_KPH(NewSpeed_KPH), Engine_RPM(NewEngine_RPM), Transmission_Gear(NewTransmissionGear), bIsInReverse(NewbIsInReverse)
 	{
 	}
+
+	float	GetSpeed() const		 { return Speed_KPH; }
+	float	GetEngineRPM() const	 { return Engine_RPM; }
+	int		GetCurrentGear() const	 { return Transmission_Gear; }
 
 private :
 	friend class UCarStatics;
@@ -84,7 +89,6 @@ protected:
 
 	friend class UCarStatics;
 	friend class ASimpleCar;
-
 };
 
 USTRUCT(BlueprintType, Category = "Engine", meta = (DisplayName = "Car Engine Setup"))
@@ -139,16 +143,7 @@ protected:
 		float AirResistance = 3.0f;
 public:
 
-	FCarEngineSetup(): TorqueCurve(nullptr)
-	{
-		//gear ratios
-		Gears.Emplace(-2.90); //reverse
-		Gears.Emplace(2.66); //1st
-		Gears.Emplace(1.78);
-		Gears.Emplace(1.30);
-		Gears.Emplace(1.0);
-		Gears.Emplace(0.74); //5th
-	}
+	FCarEngineSetup();
 
 	friend class UCarStatics;
 	friend class ASimpleCar;
@@ -172,48 +167,38 @@ protected:
 	friend class ASimpleCar;
 };
 
-//USTRUCT(BlueprintType, Category = "Wheels|Update", meta = (DisplayName = "Car Wheels Update"))
-USTRUCT()
+USTRUCT(BlueprintType, Category = "Wheels", meta = (DisplayName = "Car Wheels Update"))
 struct FCarWheelsUpdate
 {
 	GENERATED_BODY()
 private:
 
 	UPROPERTY()
-		TArray<FVector> WheelCenterLocation;
+		FVector WheelCenterLocation[4] = { FVector(0.0f) , FVector(0.0f) ,FVector(0.0f) ,FVector(0.0f) };
 	UPROPERTY()
-		TArray<FVector> TireHitLocation;
+		FVector TireHitLocation[4] = { FVector(0.0f) , FVector(0.0f) ,FVector(0.0f) ,FVector(0.0f) };
 	UPROPERTY()
-		TArray<bool> bIsSliding;
+		uint8 bIsSliding[4] = { 0,0,0,0 };
+
 	UPROPERTY()
-		TArray<float> CurrentWheelPitch;
+		float CurrentWheelPitch[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
 	UPROPERTY()
 		float DeltaPitch = 0.0f;
 	UPROPERTY()
-		TArray<float> CurrentAngle;
+		float CurrentAngle[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
 	UPROPERTY()
 		float WheelRPM = 0.0f;
 
 public:
 
-	void Add(FVector NewCenterLocation = FVector(0.f), FVector NewTireHitLocation = FVector(0.f), float NewCurrentWheelPitch = 0.f, bool NewbIsSliding = false, float NewCurrentAngle = 0.f)
-	{
-		WheelCenterLocation.Add(NewCenterLocation);
-		TireHitLocation.Add(NewTireHitLocation);
-		bIsSliding.Add(NewbIsSliding);
-		CurrentWheelPitch.Add(NewCurrentWheelPitch);
-		CurrentAngle.Add(NewCurrentAngle);
-	}
+	void GetIsSliding(TArray<bool> &Out) const;
 
-	void Init()
-	{
-
-		WheelCenterLocation.Init(FVector(0.0f, 0.0f, 0.0f), 4);
-		TireHitLocation.Init(FVector(0.0f, 0.0f, 0.0f), 4);
-		bIsSliding.Init(false, 4);
-		CurrentAngle.Init(0.0f, 4);
-		CurrentWheelPitch.Init(0.0f, 4);
-	}
+	bool GetIsSlidingFront() const { return bIsSliding[0] && bIsSliding[1];}
+	
+	bool GetIsSlidingBack() const { return bIsSliding[2] && bIsSliding[3];}
+	
 
 private :
 	friend class UCarStatics;
@@ -242,9 +227,9 @@ protected :
 
 	/**	Mimimum Slip Value at wich we're losing grip	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
-		float SlipThreshold = 140000.0f;
+		float SlipThreshold = 220000.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
-		float LongSlipThreshold = 100000.0f;
+		float LongSlipThreshold = 150000.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
 		float SmokeKickIn = 3.0f;
@@ -253,21 +238,21 @@ protected :
 	 *	BaseGrip
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grip")
-		float Grip = 1.0f;
+		float Grip = 1000.f;
 
 	/**
 	 *	maximum weight/grip multiplier, cap for weight transfer formula. 
 	 *	1 = no effect, >1 = capped to MaxGrip x default Grip
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grip")
-		float MaxGrip = 2.0f;
+		float MaxGrip = 1.05f;
 
 	/**
 	 *	maximum weight/grip multiplier for the lateral grip only, cap for weight transfer formula.
 	 *	1 = no effect, >1 = capped to MaxGrip x default Grip
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grip")
-		float MaxLatGrip = 2.0f;
+		float MaxLatGrip = 1.05f;
 
 	//max steer angle
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering")
@@ -275,6 +260,10 @@ protected :
 	//lerp speed of wheel steering
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering")
 		float SteerSpeed = 3.0f;
+public :
+	FCarWheelsSetup();
+
+private:
 
 	friend class UCarStatics;
 	friend class ASimpleCar;
@@ -316,14 +305,16 @@ public:
 		return {x, y * sign, z};
 	}
 
-	FSpringsLocation(float NewZFront = 20.f, float NewZBack = 20.f, float NewYFront = 90.f, float NewYBack = -90.f,
-	                 float NewXFront = 120, float NewXBack = -120) : ZFront(NewZFront), ZBack(NewZBack),
+	FSpringsLocation(float NewZFront = 40.f, float NewZBack = 40.f, float NewYFront = 90.f, float NewYBack = -90.f,
+	                 float NewXFront = 145.f, float NewXBack = -90.f) : ZFront(NewZFront), ZBack(NewZBack),
 	                                                                 YFront(NewYFront), YBack(NewYBack),
 	                                                                 XFront(NewXFront), XBack(NewXBack)
 	{
 	}
 
 	friend FCarSuspensionsSetup;
+	friend class UCarStatics;
+	friend class ASimpleCar;
 
 };
 
@@ -362,13 +353,13 @@ struct FCarSuspensionsSetup
 protected:
 	/**		*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float TraceLength = 60.0f;
+		float TraceLength = 70.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float SpringValue = 800000.0f;
+		float SpringValue = 950000.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float MaxSpringValue = 1200000.0f;
+		float MaxSpringValue = 90000.f;//1200000.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float DamperValue = 1000.0f;
+		float DamperValue = 500.0f;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -380,9 +371,18 @@ protected:
 
 	/**	anti-roll */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anti-roll")
-		float AntiRollFront = 0.7f;
+		float AntiRollFront = 0.8f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anti-roll")
-		float AntiRollBack = 0.6f;
+		float AntiRollBack = 0.4f;
+
+public :
+
+	FVector GetTopLocation(bool bIsFront, bool bIsLeft)
+	{
+		return  SpringConfiguration.GetLocation(bIsFront, bIsLeft);
+	}
+
+	void Init();
 
 	friend class UCarStatics;
 	friend class ASimpleCar;
@@ -423,5 +423,14 @@ public :
 
 	UFUNCTION(BlueprintPure, Category = "Dashboard|Transmission", meta = (DisplayName = "Gear as text"))
 		static FText GetTransmission_textGear(const FCarDashBoard  &Infos);
+
+	UFUNCTION(BlueprintPure, Category = "Wheels|Drift")
+		static void GetSlidingWheels(const ARaceCar * Car , TArray<bool> &Out);
+
+	UFUNCTION(BlueprintPure, Category = "Wheels|Drift")
+		static bool GetSlidingFront(const ARaceCar * Car);
+
+	UFUNCTION(BlueprintPure, Category = "Wheels|Drift")
+		static bool GetSlidingBack(const ARaceCar * Car);
 	
 };

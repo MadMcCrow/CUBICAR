@@ -23,7 +23,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		uint8 TeamID;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FColor TeamColor;
+		FLinearColor TeamColor;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		UTexture2D * TeamLogo;
 
@@ -31,7 +31,7 @@ public:
 
 	uint8 GetID() const { return TeamID; }
 	FName GetName() const { return TeamName; }
-	FColor GetColor() const { return TeamColor; }
+	FLinearColor GetColor() const { return TeamColor; }
 	UTexture2D const * GetLogo() const { return TeamLogo; }
 
 private:

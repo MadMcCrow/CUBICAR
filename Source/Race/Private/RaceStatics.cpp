@@ -5,7 +5,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "RacePlayerState.h"
 #include "RaceGameState.h"
-#include <Parts/PartStatics.h>
+#include "RaceCar.h"
+#include "Parts/PartStatics.h"
 
 
 template <typename T>
@@ -67,7 +68,11 @@ ARaceGameState* URaceStatics::GetRaceGameState(const UObject* WorldContextObject
 
 ARacePlayerState* URaceStatics::GetRacePlayerState(const UObject* WorldContextObject, const AController* Owner)
 {
+	if (!Owner)
+		return nullptr;
 	const auto PS = Owner->PlayerState;
+	if (!PS)
+		return nullptr;
 	return  Cast<ARacePlayerState>(PS);
 }
 
@@ -79,4 +84,11 @@ UTeam *URaceStatics::GetTeamByID(const UObject* WorldContextObject, uint8 id, bo
 		IsValid = true;
 	return T;
 
+}
+
+ARaceCar* URaceStatics::GetControllersCar(AController* Controller)
+{
+		if (Controller)
+			return Cast<ARaceCar>(Controller->GetPawn());
+		return nullptr;
 }

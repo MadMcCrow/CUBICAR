@@ -6,7 +6,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "Checkpoint.h"
 #include "RaceStatics.h"
+#include "RaceCar.h"
 #include "PitLanePosition.h"
+#include "LapStart.h"
 
 
 ARaceGameMode::ARaceGameMode() : Super()
@@ -18,7 +20,7 @@ ARaceGameMode::ARaceGameMode() : Super()
 void ARaceGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-
+	UpdatesCheckpointList();
 }
 
 void ARaceGameMode::PopulateTeams(const UDataTable* TeamsTable)
@@ -83,7 +85,88 @@ void ARaceGameMode::UpdatesCheckpointList()
 	UGameplayStatics::GetAllActorsOfClass(this, ACheckpoint::StaticClass(), Checkpoints);
 	
 	MapCheckpoints= reinterpret_cast<TArray<ACheckpoint*>&>(Checkpoints);
-	
 	MapCheckpoints.Sort(&ACheckpoint::SortCheckpoint);
 
+	TArray<AActor *> Starts;
+	UGameplayStatics::GetAllActorsOfClass(this, ALapStart::StaticClass(), Starts);
+	if (Starts.IsValidIndex(0))
+		RaceStart = Cast<ALapStart>(Starts[0]);
+
+}
+
+FRaceScore ARaceGameMode::CalculateScore(AController* controller) const
+{
+	FRaceScore SectionScore;
+	auto PS = URaceStatics::GetRacePlayerState(this, controller);
+	if (!PS)
+		return SectionScore;
+	SectionScore.CharismaScore = FMath::CeilToInt(CharismaFactor *CalculateCharismaScore(controller));
+	SectionScore.DriftScore =	 FMath::CeilToInt(DriftFactor *	CalculateDriftScore(controller));
+	SectionScore.TimeScore =	 FMath::CeilToInt(TimeFactor *	CalculateTimeScore(controller));
+	PS->LapPlayerScores.Add(SectionScore);
+	return SectionScore;
+}
+
+FRaceScore ARaceGameMode::CalculateLapScore(AController* controller) const
+{
+	FRaceScore LapScore;
+	auto PS = URaceStatics::GetRacePlayerState(this, controller);
+	if (!PS)
+		return LapScore;
+	for (auto it : PS->LapPlayerScores)
+	{
+		LapScore.DriftScore += it.GetDriftScore();
+		LapScore.CharismaScore += it.GetCharismaScore();
+		LapScore.TimeScore += it.GetTimeScore();
+	}
+	PS->GamePlayerScores.Add(LapScore);
+	return LapScore;
+}
+
+
+
+
+float ARaceGameMode::CalculateDriftScore_Implementation(AController* controller) const
+{
+
+	URaceStatics::GetRacePlayerState(this, controller);
+	URaceStatics::GetControllersCar(controller);
+	return 0.f;
+}
+	
+float ARaceGameMode::CalculateTimeScore_Implementation(AController* controller) const
+{
+	const auto GS = URaceStatics::GetRaceGameState(this);
+
+	auto PS = URaceStatics::GetRacePlayerState(this, controller);
+	if (!PS)
+		return 0.f;
+	if (PS->PassedCheckpoints.Num() <= 0)
+		return 0.f;
+
+	const auto CheckStruct = PS->PassedCheckpoints.Last();
+	FTimespan ThisPlayerTime = CheckStruct.Time;
+
+	FTimespan bestOnSection = GS->RaceTime();
+	for (auto it : GS->PlayerArray)
+	{
+		auto asRacePS = Cast<ARacePlayerState>(it);
+		if (asRacePS->PassedCheckpoints.Num() != 0)
+		{
+			const auto PassC = asRacePS->PassedCheckpoints;
+			for (auto c : PassC)
+				if (c.Time <= bestOnSection)
+				{
+					bestOnSection = c.Time;
+				}
+		}
+	}
+	return (float)bestOnSection.GetSeconds() / (float)ThisPlayerTime.GetSeconds();
+}
+	
+float ARaceGameMode::CalculateCharismaScore_Implementation(AController* controller) const
+{
+	URaceStatics::GetRacePlayerState(this, controller);
+	return 0.f;
+	
 }

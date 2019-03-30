@@ -15,9 +15,8 @@ APitLanePosition::APitLanePosition(const FObjectInitializer& ObjectInitializer) 
 	{
 		StartingDecal->SetupAttachment(RootComponent);
 		StartingDecal->SetDecalMaterial(DecalMaterial);
-		StartingDecal->DecalSize = FVector(32.f, 32.f, 32.f);
+		StartingDecal->DecalSize = FVector(150.f, 150.f, 150.f);
 		StartingDecal->SetRelativeRotation(FRotator(90.f, 0.f, 0.f).Quaternion());
-		
 	}
 	
 }

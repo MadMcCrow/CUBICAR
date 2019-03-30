@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Checkpoint.h"
+#include "Race.h"
 #include "GameFramework/Pawn.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -56,7 +57,8 @@ void ACheckpoint::OnEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* Othe
 
 void ACheckpoint::OnCarEntered(APawn* Pawn)
 {
-	const auto PlayerState  = Cast<ARacePlayerState>(Pawn->PlayerState);
+	UE_LOG(LogRace, Display, TEXT("%s passed %s"),*Pawn->GetName(), *GetName());
+	const auto PlayerState = Pawn->GetPlayerState<ARacePlayerState>();
 	if (!PlayerState)
 		return;
 	PlayerState->OnPassedCheckpoint(this);

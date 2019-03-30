@@ -4,9 +4,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "UserWidget.h"
 #include "GameMapsSettings.h"
-#include "CUBICARPhysicsReplication.h"
+#include "Physics/CUBICARPhysicsReplication.h"
 #include "WidgetBlueprintLibrary.h"
-//#include "UnrealNetwork.h"
+#include "UnrealNetwork.h"
 #include "Online.h"
 #include "PleaseWaitMessageWidget.h"
 //#include "Menu/PleaseWaitMessageWidget.h"
@@ -38,7 +38,10 @@ UCUBICARGameInstance::UCUBICARGameInstance(const FObjectInitializer& ObjectIniti
 void UCUBICARGameInstance::Init()
 {
 	Super::Init();
-	FPhysScene::PhysicsReplicationFactory = MakeShareable(new ICUBICARPhysicsReplicationFactory());
+	// Use this to use custom physics replication
+	// 4.20 version
+	// this does not work in 4.21
+	//FPhysScene::PhysicsReplicationFactory = MakeShareable(new ICUBICARPhysicsReplicationFactory());
 }
 
 void UCUBICARGameInstance::Shutdown()
@@ -51,10 +54,10 @@ void UCUBICARGameInstance::Shutdown()
 void UCUBICARGameInstance::QuitGame()
 {
 #if UE_EDITOR
-	UKismetSystemLibrary::QuitGame(GetWorld(), GetPrimaryPlayerController(), EQuitPreference::Type::Quit);
+	UKismetSystemLibrary::QuitGame(GetWorld(), GetPrimaryPlayerController(), EQuitPreference::Type::Quit, true);
 	return;
 #endif // UE_EDITOR
-	UKismetSystemLibrary::QuitGame(GetWorld(), GetPrimaryPlayerController(), EQuitPreference::Type::Quit);
+	UKismetSystemLibrary::QuitGame(GetWorld(), GetPrimaryPlayerController(), EQuitPreference::Type::Quit, true);
 	//FGenericPlatformMisc::RequestExit(false);
 }
 

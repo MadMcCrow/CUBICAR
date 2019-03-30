@@ -3,13 +3,17 @@
 #include "GameFramework/Pawn.h"
 #include "Components/AudioComponent.h"
 #include "PhysicsEngine/PhysicsAsset.h"
+#include "CarStatics.h"
 #include "SimpleCar.generated.h"
+
 
 class USpringArmComponent;
 class UStaticMesh;
 class UCameraComponent;
 class UParticleSystemComponent;
 class USoundCue;
+
+
 
 UCLASS()
 class RACE_API ASimpleCar : public APawn
@@ -18,8 +22,37 @@ class RACE_API ASimpleCar : public APawn
 
 protected:
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(Replicated, BlueprintReadOnly)
+		FCarDashBoard DashboardInfo;
+
+public:
+	UFUNCTION(BlueprintPure, Category = "Info")
+		FCarDashBoard GetDashboardInfo() const { return DashboardInfo; }
+
+protected:
+
+	UPROPERTY(BlueprintReadOnly, Replicated, Category = "Wheels")
 		UStaticMesh * WheelMesh;
+
+	UFUNCTION(BlueprintPure, Category = "Wheels")
+		virtual UStaticMesh * GetWheelMesh();
+
+	UFUNCTION()
+		virtual void UpdateWheels();
+	UFUNCTION()
+		virtual void UpdateSuspensions();
+
+private:
+	UFUNCTION(NetMulticast, Reliable, WithValidation)
+		void Multicast_UpdateWheelsMesh();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		void  Server_UpdateSuspensions();
+
+
+	UPROPERTY(EditAnywhere)
+		bool bDrawDebug;
+
 
 private:
 	/**  The main skeletal mesh associated with this Vehicle */
@@ -37,7 +70,7 @@ private:
 		class UStaticMeshComponent* Wheel3;
 
 	//wheel array
-	UPROPERTY(BlueprintReadOnly, Category = VehicleSetup, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, Category = "Wheels", meta = (AllowPrivateAccess = "true"))
 		TArray<UStaticMeshComponent*> WheelArray;
 
 	//private:
@@ -47,7 +80,11 @@ private:
 
 private:
 	FCalculateCustomPhysics OnCalculateCustomPhysics;
+
+	
 	void CustomPhysics(float DeltaTime, FBodyInstance* BodyInstance);
+
+
 	FHitResult Trace(FVector TraceStart, FVector TraceDirection);
 	FBodyInstance *MainBodyInstance;
 
@@ -60,7 +97,7 @@ private:
 public:
 	// Sets default values for this pawn's properties
 	ASimpleCar();
-	
+
 	/** Spring arm that will offset the camera */
 	UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		USpringArmComponent* SpringArm;
@@ -77,6 +114,30 @@ public:
 
 	// Called every frame
 	virtual void Tick(float DeltaSeconds) override;
+
+	virtual void UpdateCar(float DeltaSeconds);
+
+#if 0
+	// Accurate location replication for other clients and server. The client is authoritative. Could lead to Cheat, see validate
+	UFUNCTION(Server, Reliable, WithValidation)
+		virtual void Server_UpdateTransform(FTransform NewTransform);
+
+	UPROPERTY(Replicated) //Using = OnRep_CarTransform)
+		FTransform CarTransform;
+
+	//UFUNCTION()
+	//	void OnRep_CarTransform();
+
+	UFUNCTION(NetMulticast, Reliable, WithValidation)
+		virtual void Multicast_UpdateTransform(FTransform NewTransform);
+
+	UFUNCTION(BlueprintPure, Category = Transform)
+		FTransform GetCarTransform() const { return CarTransform; }
+
+#endif //0
+
+	UFUNCTION(NetMulticast, Reliable, WithValidation)
+	virtual void Multicast_UpdateEffects(float DeltaTime);
 
 	void SpawnSmokeEffect(int WheelIndex);
 
@@ -96,6 +157,7 @@ public:
 	void ChangeDown();
 
 	FVector AddDrive(float DeltaTime, FBodyInstance* BodyInstance, FVector Loc, FVector Dir, int32 Index);
+
 	FVector AddLatGrip(float DeltaTime, FBodyInstance* BodyInstance, FVector Loc, FVector Dir, int32 Index);
 
 	float GetPowerToWheels(float DeltaTime, FBodyInstance* BodyInstance);
@@ -104,8 +166,16 @@ public:
 	/** update effects under wheels */
 	void UpdateWheelEffects(float DeltaTime, int32 Index);
 
-	//// vars /////////
-	///////////////////
+
+	// Suspension --------------------------------------------------------------------------------------------------/
+	UPROPERTY( Replicated, EditAnywhere, BlueprintReadWrite, Category = "Suspension")
+		FCarSuspensionsSetup Suspensions;
+
+#if 0
+	//trace start locations
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
+		UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Suspension")
+		TArray<FVector> SpringTopLocation;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
 		float TraceLength = 60.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
@@ -114,6 +184,8 @@ public:
 		float MaxSpringValue = 1200000.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
 		float DamperValue = 1000.0f;
+#endif //0
+
 
 	UPROPERTY(BlueprintReadOnly, Category = "Suspension")
 		TArray<bool> bOnGround;
@@ -124,21 +196,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Suspension")
 		FVector SpringLocation;
 
-	//trace start locations
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
-		TArray<FVector> SpringTopLocation;
+
+
 	UPROPERTY(BlueprintReadOnly, Category = "Suspension")
 		TArray<FVector> SuspForceLocation;
 	UPROPERTY(BlueprintReadOnly, Category = "Suspension")
 		TArray<FVector> SpringForceArray;
 
-	//anti-roll
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
-		float AntiRollFront = 0.7f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspension")
-		float AntiRollBack = 0.6f;
-
-	//engine --------------- 
+	// Engine --------------------------------------------------------------------------------------------------/
 	/** engine sound */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EngineSound")
 		USoundCue* EngineSound;
@@ -163,14 +228,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Engine")
 		UCurveFloat* TorqueCurve;
-	UPROPERTY(BlueprintReadOnly, Category = "Engine")
-		float Throttle = 0.0f;
-	UPROPERTY(BlueprintReadOnly, Category = "Engine")
-		bool bClutchEngaged = false;
-	UPROPERTY(BlueprintReadOnly, Category = "Engine")
-		float CurrentPower = 0.0f;
-	UPROPERTY(BlueprintReadOnly, Category = "Engine")
-		float AvailablePower = 0.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
 		float RedLineRPM = 6000.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Engine")
@@ -192,48 +250,54 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gears")
 		bool bAutomaticGears = true;
 	UPROPERTY(BlueprintReadOnly, Category = "Engine")
-		float EngineRPM = 0.0f;
-	UPROPERTY(BlueprintReadOnly, Category = "Engine")
 		float WheelRPM = 0.0f;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Engine")
-		bool bBraking = false;
-	UPROPERTY(BlueprintReadOnly, Category = "Engine")
-		bool bInReverse = false;
+	UPROPERTY(Replicated)
+		FCarEngineUpdate EngineUpdate;
 
-	//for visual speed indicator
-	UPROPERTY(BlueprintReadOnly, Category = "Engine")
-		float SpeedKPH = 0.0f;
-	UPROPERTY(BlueprintReadOnly, Category = "Engine")
-		int32 SpeedKPH_int = 0;
+
+	UFUNCTION(BlueprintPure)
+		float GetEngineCurrentRPM() const { return EngineUpdate.EngineRPM; }
+	UFUNCTION(BlueprintPure)
+		float GetEngineMaxRPM() const { return EngineMaxRPM; }
+	UFUNCTION(BlueprintPure)
+		float GetEngineMinRPM() const { return EngineIdleRPM; }
+	UFUNCTION(BlueprintPure)
+		float GetRedLineRPM() const { return RedLineRPM; }
+
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		void Server_UpdateThrottle(float Throttle);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		void Server_UpdateWheelAngle(float Val);
+
+	// Wheels --------------------------------------------------------------------------------------------------/
 
 	//wheel bones
 	//UPROPERTY(EditAnywhere, Category = "Wheels")
 	//	TArray<FName> BoneNames;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Replicated, Category = "Wheels")
+		FCarWheelsSetup  WheelSetup;
+
+#if 0
+	//unused
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
 		TArray<bool> bIsPowered;
-	//steering
-	UPROPERTY(BlueprintReadOnly, Category = "Wheels")
-		TArray<FVector> WheelCenterLocation;
-	UPROPERTY(BlueprintReadOnly, Category = "Wheels")
-		TArray<FVector> TireHitLocation;
-	//how fast visual wheels rotate
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
 		float RotationAmount = -1.0f;
-	UPROPERTY(BlueprintReadOnly, Category = "Wheels")
-		TArray<float> CurrentWheelPitch;
-	UPROPERTY(BlueprintReadOnly, Category = "Wheels")
-		float DeltaPitch = 0.0f;
-
-	//for tire smoke ect
-	UPROPERTY(BlueprintReadOnly, Category = "Wheels")
-		TArray<bool> bIsSliding;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
 		float SlipThreshold = 140000.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
 		float SmokeKickIn = 3.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
 		float LongSlipThreshold = 100000.0f;
+
+	//UPROPERTY(EditAnywhere, Category = "Wheels")
+		//float MaxLatGrip = 50000;
+	//UPROPERTY(EditAnywhere, Category = "Wheels")
+		//float MaxLongGrip = 50000;
+
 	//grip
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
 		float Grip = 1.0f;
@@ -243,19 +307,26 @@ public:
 		float MaxGrip = 2.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels")
 		float MaxLatGrip = 2.0f;
-	//unused
-	//UPROPERTY(EditAnywhere, Category = "Wheels")
-	//	float MaxLatGrip = 50000;
-	//unused
-	//UPROPERTY(EditAnywhere, Category = "Wheels")
-	//	float MaxLongGrip = 50000;
-	//
-	UPROPERTY(BlueprintReadOnly, Category = "Wheels")
-		TArray<FVector> TireForceArray;
-	UPROPERTY(BlueprintReadOnly, Category = "Wheels")
-		TArray<FVector> WheelForwardArray;
-	UPROPERTY(BlueprintReadOnly, Category = "Wheels")
-		TArray<FVector> WheelRightArray;
+
+	//wheel radius
+	UPROPERTY(EditAnywhere, Category = "Wheels")
+		float Radius = 32.0f;
+#endif //0
+
+protected:
+	UPROPERTY(Replicated)
+		FCarWheelsUpdate WheelsUpdate;
+
+	UFUNCTION(BlueprintPure, Category = "Wheels")
+		void GetSliding(TArray<bool> &OutArray) const;
+
+	//UPROPERTY(BlueprintReadOnly, Category = "Wheels")
+	UPROPERTY()//Replicated)
+		FVector TireForceArray[4] = { FVector(0.0f) , FVector(0.0f) ,FVector(0.0f) ,FVector(0.0f) };
+	UPROPERTY()//Replicated)
+		FVector WheelForwardArray[4] = { FVector(0.0f) , FVector(0.0f) ,FVector(0.0f) ,FVector(0.0f) };
+	UPROPERTY()//Replicated)
+		FVector WheelRightArray[4] = { FVector(0.0f) , FVector(0.0f) ,FVector(0.0f) ,FVector(0.0f) };
 
 	//tire smoke
 	UPROPERTY(EditAnywhere, Category = "Wheels")
@@ -273,15 +344,12 @@ public:
 	//max steer angle
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering")
 		float SteerAngle = 45.0f;
-	UPROPERTY(BlueprintReadOnly, Category = "Steering")
-		TArray<float> CurrentAngle;
+
 	//lerp speed of wheel steering
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering")
 		float SteerSpeed = 3.0f;
 
-	//wheel radius
-	UPROPERTY(EditAnywhere, Category = "Wheels")
-		float Radius = 32.0f;
+
 
 	/** Returns Mesh subobject **/
 	class USkeletalMeshComponent* GetMesh() const;
@@ -291,6 +359,10 @@ public:
 	FORCEINLINE USpringArmComponent* GetSpringArm() const { return SpringArm; }
 	/** Returns Camera subobject **/
 	FORCEINLINE UCameraComponent* GetCamera() const { return Camera; }
+
+private :
+
+	friend UCarStatics;
 
 };
 

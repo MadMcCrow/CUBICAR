@@ -16,6 +16,39 @@ class UTeam;
 class ARacePlayerState;
 
 
+USTRUCT(BlueprintType, Category = "Score", meta = (DisplayName = "CUBICAR Score"))
+struct FRaceScore
+{
+	GENERATED_BODY()
+private:
+
+	UPROPERTY()
+	uint32 DriftScore;
+	
+	UPROPERTY()
+	uint32 TimeScore;
+	
+	UPROPERTY()
+	uint32 CharismaScore;
+
+	
+public :
+	FRaceScore() : DriftScore(0), TimeScore(0), CharismaScore(0)
+	{
+	
+	}
+
+	uint32 GetDriftScore() const {	return DriftScore;	}
+	uint32 GetCharismaScore() const { return CharismaScore; }
+	uint32 GetTimeScore() const { return TimeScore; }
+
+private :
+	friend class URaceStatics;
+	friend class ARacePlayerState;
+	friend class ARaceGameMode;
+
+};
+
 
 /**
  * 
@@ -51,6 +84,10 @@ public :
 
 	UFUNCTION(BlueprintPure, Category = "Race", meta = (WorldContext = "WorldContextObject"))
 		static UTeam * GetTeamByID(const UObject* WorldContextObject, uint8 id, bool &IsValid);
+
+	UFUNCTION(BlueprintPure, Category = "Race")
+		static class ARaceCar* GetControllersCar(AController* Controller);
+
 
 	
 };

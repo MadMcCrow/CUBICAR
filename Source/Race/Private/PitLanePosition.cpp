@@ -6,6 +6,7 @@
 #include "WorldCollision.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
+#include "RaceCar.h"
 
 
 APitLanePosition::APitLanePosition(const FObjectInitializer& ObjectInitializer) :Super(ObjectInitializer)
@@ -21,35 +22,18 @@ APitLanePosition::APitLanePosition(const FObjectInitializer& ObjectInitializer) 
 	
 }
 
-bool APitLanePosition::IsAvailable()
+bool APitLanePosition::IsAvailable_Implementation()
 {
-	FVector OrigLocation = GetActorLocation();
-	bool bResult = true;
-	const float Radius = GetCapsuleComponent()->GetUnscaledCapsuleRadius();
-	FVector const Slice(Radius, Radius, 1.f);
-	// Check for adjustment
-	FHitResult Hit(ForceInit);
-	const FVector TraceStart = GetActorLocation();
-	const FVector TraceEnd = GetActorLocation() - FVector(0.f, 0.f, 4.f * GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
-	GetWorld()->SweepSingleByChannel(Hit, TraceStart, TraceEnd, FQuat::Identity, ECC_Pawn, FCollisionShape::MakeBox(Slice), FCollisionQueryParams(SCENE_QUERY_STAT(NavObjectBase_Validate), false, this));
-	if (Hit.bBlockingHit)
+	const auto T = GetCapsuleComponent()->GetOverlapInfos();
+	for (const auto& it : T)
 	{
-		const FVector HitLocation = TraceStart + (TraceEnd - TraceStart) * Hit.Time;
-		FVector Dest = HitLocation + FVector(0.f, 0.f, GetCapsuleComponent()->GetScaledCapsuleHalfHeight() - 2.f);
-
-		// Move actor (TEST ONLY) to see if navigation point moves
-		TeleportTo(Dest, GetActorRotation(), false, true);
-
-		// If only adjustment was down towards the floor, then it is a valid placement
-		FVector NewLocation = GetActorLocation();
-		bResult = (NewLocation.X == OrigLocation.X &&
-			NewLocation.Y == OrigLocation.Y &&
-			NewLocation.Z <= OrigLocation.Z);
-		
-		// Move actor back to original position
-		TeleportTo(OrigLocation, GetActorRotation(), false, true);
-		return bResult;
+		if (it.OverlapInfo.IsValidBlockingHit())
+		{
+			if(Cast<ARaceCar>(it.OverlapInfo.Actor.Get()))
+				return false;
+				
+		}
 	}
-	return bResult;
+	return true;
 }
 

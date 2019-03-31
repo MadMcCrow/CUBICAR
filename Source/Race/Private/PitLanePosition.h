@@ -20,10 +20,15 @@ public :
 
 	APitLanePosition(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+	UFUNCTION(BlueprintPure)
+		UCapsuleComponent * GetCapsule() const { return GetCapsuleComponent(); }
+
 private :
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Decal", meta = (AllowPrivateAccess = "true"))
 		class UDecalComponent * StartingDecal;
+
+
 
 protected:
 
@@ -37,7 +42,7 @@ public:
 
 	FORCEINLINE int GetIndex() const { return Index; }
 
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, BlueprintNativeEvent)
 		bool IsAvailable();
 
 private :

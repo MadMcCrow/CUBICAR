@@ -54,6 +54,13 @@ bool ARacePlayerState::Server_PassedCheckpoint_Validate(const AController* Playe
 
 void ARacePlayerState::Server_PassedCheckpoint_Implementation(const AController* Player,ACheckpoint* PassedCheckpoint)
 {
+	if(Role != ROLE_Authority)
+	{
+		if (Role == ROLE_AutonomousProxy)
+			UE_LOG(LogRace, Display, TEXT("Called on Autonomous, while it shouldn't"));
+		if (Role == ROLE_SimulatedProxy)
+			UE_LOG(LogRace, Display, TEXT("Called on Simulated, while it shouldn't"));
+	}
 	const auto GS = URaceStatics::GetRaceGameState(this);
 	const auto GM = URaceStatics::GetRaceGameMode(this);
 
@@ -86,9 +93,9 @@ void ARacePlayerState::Server_PassedCheckpoint_Implementation(const AController*
 				return;
 		}
 	}
-
-
-	FCheckpointScore C(PassedCheckpoint, URaceStatics::GetRaceGameState(this)->RaceTime());
+	const auto Time = URaceStatics::GetRaceGameState(this)->RaceTime();
+	LastCheckpointTime = Time;
+	FCheckpointScore C(PassedCheckpoint, Time);
 	PassedCheckpoints.Add(C);
 }
 
@@ -106,6 +113,26 @@ void ARacePlayerState::BeginPlay()
 	{
 		Car->CollisionAvoided.AddDynamic(this, &ARacePlayerState::PlayerCarAvoidedCollision);
 	}
+}
+
+void ARacePlayerState::Tick(float DeltaSeconds)
+{
+	switch (Role)
+	{
+	case ROLE_Authority:
+		UpdateTempDriftScore();
+	case ROLE_AutonomousProxy:
+		UpdateTempDriftScore();		//Server_UpdateTempDriftScore_Implementation();
+		break;
+	case ROLE_SimulatedProxy:
+		// Do nothing
+		break;
+	default:
+		break;
+	}
+	
+		
+
 }
 
 void ARacePlayerState::NotifyPassedCheckpoint() const
@@ -131,16 +158,19 @@ void ARacePlayerState::OnPassedCheckpoint(ACheckpoint* PassedCheckpoint)
 			Server_PassedCheckpoint(OwningPlayer, PassedCheckpoint);
 			Server_CalculateScore();
 			return;
-		default:
+		case ROLE_Authority:
 			Server_PassedCheckpoint_Implementation(OwningPlayer, PassedCheckpoint);
 			Server_CalculateScore_Implementation();
+		default:
 			return;
 		}
 	}
-	else
-	{
-		UE_LOG(LogRace, Error, TEXT("%s : I don't have a valid Owning Player"), *GetPlayerName());
-	}
+	UE_LOG(LogRace, Error, TEXT("%s : I don't have a valid Owning Player"), *GetPlayerName());
+}
+
+float ARacePlayerState::GetTempDriftTime_Implementation() const
+{
+	return 0.f;
 }
 
 void ARacePlayerState::PlayerCarAvoidedCollision_Implementation()
@@ -155,19 +185,17 @@ void ARacePlayerState::PlayerCarAvoidedCollision_Implementation()
 bool ARacePlayerState::Server_CalculateScore_Validate() { return true; }
 void ARacePlayerState::Server_CalculateScore_Implementation()
 {
-	const auto GM = URaceStatics::GetRaceGameMode(this);
-	GM->CalculateScore(OwningPlayer);
+	if(Role == ROLE_Authority)
+	{
+		const auto GM = URaceStatics::GetRaceGameMode(this);
+		GM->CalculateScore(OwningPlayer);
+	}
 }
 
 
-bool ARacePlayerState::Server_UpdateTempDriftScore_Validate() { return true; }
-void ARacePlayerState::Server_UpdateTempDriftScore_Implementation()
+//bool ARacePlayerState::Server_UpdateTempDriftScore_Validate() { return true; }
+void ARacePlayerState::UpdateTempDriftScore_Implementation()
 {
-	const auto Car = Cast<ARaceCar>(GetPawn());
-	if (Car->GetCarIsDrifting())
-	{
-		TempDriftTime += GetWorld()->GetDeltaSeconds();
-	}
 }
 
 void ARacePlayerState::GetLifetimeReplicatedProps(class TArray<class FLifetimeProperty, class FDefaultAllocator> & OutLifetimeProps) const
@@ -176,10 +204,11 @@ void ARacePlayerState::GetLifetimeReplicatedProps(class TArray<class FLifetimePr
 	DOREPLIFETIME(ARacePlayerState, OwningPlayer);
 	DOREPLIFETIME(ARacePlayerState, bShouldResetAtPit);
 	DOREPLIFETIME(ARacePlayerState, PassedCheckpoints);
-	DOREPLIFETIME(ARacePlayerState, TempDriftTime);
+	DOREPLIFETIME(ARacePlayerState, TempDriftScore);
 	DOREPLIFETIME(ARacePlayerState, TempCharsimaScore);
 	DOREPLIFETIME(ARacePlayerState, LapPlayerScores);
 	DOREPLIFETIME(ARacePlayerState, GamePlayerScores);
 	DOREPLIFETIME(ARacePlayerState, FinalPlayerScore);
 	DOREPLIFETIME(ARacePlayerState, Laps);
+	DOREPLIFETIME(ARacePlayerState, LastCheckpointTime);
 }

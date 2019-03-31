@@ -7,6 +7,7 @@
 #include "Checkpoint.h"
 #include "RaceStatics.h"
 #include "RaceCar.h"
+#include "EngineUtils.h"
 #include "PitLanePosition.h"
 #include "LapStart.h"
 
@@ -17,11 +18,13 @@ ARaceGameMode::ARaceGameMode() : Super()
 	PlayerStateClass = ARacePlayerState::StaticClass();
 }
 
+/*
 void ARaceGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	UpdatesCheckpointList();
 }
+*/
 
 void ARaceGameMode::PopulateTeams(const UDataTable* TeamsTable)
 {
@@ -32,37 +35,58 @@ void ARaceGameMode::PopulateItems(const UDataTable* ItemsTable)
 {
 
 }
-
+/*
 AActor* ARaceGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
-	auto Start = Super::ChoosePlayerStart_Implementation(Player);
-	TArray<AActor *> actorpits;
-	UGameplayStatics::GetAllActorsOfClass(this, APitLanePosition::StaticClass(), actorpits);
-	TArray<APitLanePosition *> Pits = reinterpret_cast<TArray<APitLanePosition*>&>(actorpits);
-	Pits.Sort(&APitLanePosition::Sort);
-	for (auto it : Pits)
-		if (it->IsAvailable())
-			Start = it;
+	// Choose a player start
+	APlayerStart* FoundPlayerStart = nullptr;
+	UClass* PawnClass = GetDefaultPawnClassForController(Player);
+	APawn* PawnToFit = PawnClass ? PawnClass->GetDefaultObject<APawn>() : nullptr;
+	TArray<APlayerStart*> UnOccupiedStartPoints;
+	TArray<APlayerStart*> OccupiedStartPoints;
+	UWorld* World = GetWorld();
+	for (TActorIterator<APitLanePosition> It(World); It; ++It)
+	{
+		APlayerStart* PlayerStart = *It;
 
-	if (!Player)
-		return Start;
-
-	const auto PState = Cast<ARacePlayerState>(Player->PlayerState);
-	if (!PState)
-		return Start;
-
-	if (PState->GetShouldRestartAtPit())
-		return Start;
-
-	const auto CheckpointStart = PState->GetLastPassedCheckpoint();
-	if (!CheckpointStart)
-		return Start;
-	return CheckpointStart;
+		if (PlayerStart->IsA<APitLanePosition>())
+		{
+			// Always prefer the first "Play from Here" PlayerStart, if we find one while in PIE mode
+			FoundPlayerStart = PlayerStart;
+			break;
+		}
+		else
+		{
+			FVector ActorLocation = PlayerStart->GetActorLocation();
+			const FRotator ActorRotation = PlayerStart->GetActorRotation();
+			if (!World->EncroachingBlockingGeometry(PawnToFit, ActorLocation, ActorRotation))
+			{
+				UnOccupiedStartPoints.Add(PlayerStart);
+			}
+			else if (World->FindTeleportSpot(PawnToFit, ActorLocation, ActorRotation))
+			{
+				OccupiedStartPoints.Add(PlayerStart);
+			}
+		}
+	}
+	if (FoundPlayerStart == nullptr)
+	{
+		if (UnOccupiedStartPoints.Num() > 0)
+		{
+			FoundPlayerStart = UnOccupiedStartPoints[FMath::RandRange(0, UnOccupiedStartPoints.Num() - 1)];
+		}
+		else if (OccupiedStartPoints.Num() > 0)
+		{
+			FoundPlayerStart = OccupiedStartPoints[FMath::RandRange(0, OccupiedStartPoints.Num() - 1)];
+		}
+	}
+	return FoundPlayerStart;
 }
 
+*/
 
 
-#if WITH_EDITOR
+#if 0
 
 
 void ARaceGameMode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
@@ -97,13 +121,20 @@ void ARaceGameMode::UpdatesCheckpointList()
 FRaceScore ARaceGameMode::CalculateScore(AController* controller) const
 {
 	FRaceScore SectionScore;
-	auto PS = URaceStatics::GetRacePlayerState(this, controller);
-	if (!PS)
-		return SectionScore;
-	SectionScore.CharismaScore = FMath::CeilToInt(CharismaFactor *CalculateCharismaScore(controller));
-	SectionScore.DriftScore =	 FMath::CeilToInt(DriftFactor *	CalculateDriftScore(controller));
-	SectionScore.TimeScore =	 FMath::CeilToInt(TimeFactor *	CalculateTimeScore(controller));
-	PS->LapPlayerScores.Add(SectionScore);
+	if (Role == ROLE_Authority)
+	{
+		if (!controller)
+			return SectionScore;
+		auto PS = URaceStatics::GetRacePlayerState(this, controller);
+		if (!PS)
+			return SectionScore;
+
+		int time = CalculateTimeScore(controller);
+		SectionScore.CharismaScore = CharismaFactor *CalculateCharismaScore(controller);
+		SectionScore.DriftScore =	 DriftFactor *	CalculateDriftScore(controller);
+		SectionScore.SetTimeScore(time * TimeFactor);
+		PS->LapPlayerScores.Add(SectionScore);
+	}
 	return SectionScore;
 }
 
@@ -124,7 +155,7 @@ FRaceScore ARaceGameMode::CalculateLapScore(AController* controller) const
 }
 
 
-
+/*
 
 float ARaceGameMode::CalculateDriftScore_Implementation(AController* controller) const
 {
@@ -134,7 +165,7 @@ float ARaceGameMode::CalculateDriftScore_Implementation(AController* controller)
 	return 0.f;
 }
 	
-float ARaceGameMode::CalculateTimeScore_Implementation(AController* controller) const
+float ARaceGameMode::CalculateTimeScore(AController* controller) const
 {
 	const auto GS = URaceStatics::GetRaceGameState(this);
 
@@ -166,7 +197,8 @@ float ARaceGameMode::CalculateTimeScore_Implementation(AController* controller) 
 	
 float ARaceGameMode::CalculateCharismaScore_Implementation(AController* controller) const
 {
-	URaceStatics::GetRacePlayerState(this, controller);
+	//URaceStatics::GetRacePlayerState(this, controller);
 	return 0.f;
 	
 }
+*/

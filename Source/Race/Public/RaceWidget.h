@@ -27,6 +27,8 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 		UTextBlock * GearTextBlock;
 
+	UPROPERTY(meta = (BindWidget))
+		UTextBlock * TimeTextBlock;
 
 
 public:
@@ -48,6 +50,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Binding", meta = (DisplayName = "RPM float"))
 		float GetCurrentRPM() const;
+
+	UFUNCTION(BlueprintPure, Category = "Binding", meta = (DisplayName = "Gear Text"))
+		FText GetTimeText();
+
 
 private :
 

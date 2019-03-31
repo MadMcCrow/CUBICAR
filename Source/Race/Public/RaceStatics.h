@@ -20,7 +20,8 @@ USTRUCT(BlueprintType, Category = "Score", meta = (DisplayName = "CUBICAR Score"
 struct FRaceScore
 {
 	GENERATED_BODY()
-private:
+
+protected:
 
 	UPROPERTY()
 	uint32 DriftScore;
@@ -37,6 +38,10 @@ public :
 	{
 	
 	}
+	void SetTimeScore(uint32 Score)		{	TimeScore	= Score;}
+	void SetCharismaScore(uint32 Score) { CharismaScore	= Score;}
+	void SetDriftScore(uint32 Score)	{ DriftScore	= Score;}
+
 
 	uint32 GetDriftScore() const {	return DriftScore;	}
 	uint32 GetCharismaScore() const { return CharismaScore; }

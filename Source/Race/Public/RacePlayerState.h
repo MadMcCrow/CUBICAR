@@ -63,6 +63,8 @@ private :
 
 	virtual  void BeginPlay() override;
 
+	virtual void Tick(float DeltaSeconds) override;
+
 protected:
 
 	UPROPERTY(BlueprintReadOnly, Replicated)
@@ -93,6 +95,9 @@ private:
 	UPROPERTY(Replicated)
 	AController * OwningPlayer;
 
+	UPROPERTY(Replicated)
+		FTimespan LastCheckpointTime;
+
 protected:
 
 	UPROPERTY(Replicated, BlueprintReadOnly)
@@ -120,26 +125,31 @@ protected:
 		uint8 Laps;
 
 
+
 	UPROPERTY(Replicated)
-		uint32 TempDriftTime;
+		uint32 TempDriftScore;
 
 	UPROPERTY(Replicated)
 		uint32 TempCharsimaScore;
 
 
 public :
-	UFUNCTION(blueprintPure)
-		int GetTempDriftTime() const { return TempDriftTime; }
+	UFUNCTION(BlueprintNativeEvent, Category = "Score|Drift")
+		float GetTempDriftTime() const;
 
-private:
-	UFUNCTION(Server, Reliable, WithValidation)
-		void Server_UpdateTempDriftScore();
+	UFUNCTION(blueprintPure, Category = "Score|Time")
+		FTimespan GetLastCheckpointTime() const { return LastCheckpointTime; }
+
+
+protected:
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Score|Charisma")
+		void UpdateTempDriftScore();
 
 	UFUNCTION(Server, Reliable, WithValidation)
 		void Server_CalculateScore();
 
 protected:
-	UFUNCTION(BlueprintNativeEvent, Category = "Score|Charisma")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Score|Charisma")
 		void PlayerCarAvoidedCollision();
 
 

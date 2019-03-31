@@ -24,7 +24,7 @@ public:
 	ARaceGameMode();
 
 
-	virtual void BeginPlay() override;
+	//virtual void BeginPlay() override;
 
 
 protected:
@@ -45,7 +45,7 @@ protected:
 
 	//	Checkpoints		------------------------------------------------------------------------------------------
 
-	AActor* ChoosePlayerStart_Implementation(AController* Player) override;
+	//AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 
 public:
 	UFUNCTION(BlueprintPure)
@@ -63,13 +63,15 @@ protected:
 
 public:
 
-#if WITH_EDITOR
+#if 0
 
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif // WITH_EDITOR
 
 
-private:
+protected:
+
+	UFUNCTION(BlueprintCallable, Category = "Checkpoints")
 	void UpdatesCheckpointList();
 	
 public:
@@ -77,13 +79,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Score")
 		FRaceScore CalculateScore(AController* controller) const;
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Score")
+	//UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Score")
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Score")
 	float CalculateDriftScore(AController* controller) const;
 	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Score")
+	//UFUNCTION(BlueprintCallable, Category = "Score")
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Score")
 	float CalculateTimeScore(AController* controller) const;
 	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Score")
+	//UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Score")
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Score")
 	float CalculateCharismaScore(AController* controller) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Score")

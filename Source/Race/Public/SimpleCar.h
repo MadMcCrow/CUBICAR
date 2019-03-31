@@ -22,8 +22,15 @@ class RACE_API ASimpleCar : public APawn
 
 protected:
 
-	UPROPERTY(Replicated, BlueprintReadOnly)
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Dashboard")
 		FCarDashBoard DashboardInfo;
+
+public:
+	UFUNCTION(BlueprintPure, Category = "Dashboard")
+		FORCEINLINE float GetSpeed() const { return DashboardInfo.Speed_KPH; }
+
+	UFUNCTION(BlueprintPure, Category = "Dashboard")
+		FORCEINLINE bool GetIsReverse() const { return DashboardInfo.bIsInReverse; }
 
 public:
 	UFUNCTION(BlueprintPure, Category = "Info")
@@ -72,7 +79,6 @@ private:
 	//wheel array
 	UPROPERTY(BlueprintReadOnly, Category = "Wheels", meta = (AllowPrivateAccess = "true"))
 		TArray<UStaticMeshComponent*> WheelArray;
-
 	//private:
 		/** audio component for engine sounds */
 	UPROPERTY(Category = Effects, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -149,6 +155,21 @@ public:
 
 	/** Handle pressing right */
 	void MoveRight(float Val);
+
+	/** Handle HandBrake */
+	void HandBrakeOn();
+
+	/** Handle HandBrake */
+	void HandBrakeOff();
+
+	virtual void HandleInputs();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		void Server_SetHandbrake(bool Handbrake);
+
+	UPROPERTY(Replicated)
+	bool bIsHandBrake;
+
 
 	/** gear up */
 	void ChangeUp();

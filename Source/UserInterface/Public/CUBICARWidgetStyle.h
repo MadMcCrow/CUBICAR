@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Framework/Styling/ButtonWidgetStyle.h"
+#include "Style/CustomButtonStyle.h"
 #include "CUBICARWidgetStyle.generated.h"
 
 struct FCustomButtonStyle;
@@ -18,15 +19,15 @@ public:
 
 public:
 	/** The actual data describing the button's appearance. */
-	//UPROPERTY(Category = Appearance, EditAnywhere, BlueprintReadWrite, meta = (ShowOnlyInnerProperties))
-	//	FCustomButtonStyle ButtonStyle;
+	UPROPERTY(Category = Appearance, EditAnywhere, BlueprintReadWrite, meta = (ShowOnlyInnerProperties))
+		FCustomButtonStyle ButtonStyle;
 
 
-	/**
+	
 	virtual const struct FSlateWidgetStyle* const GetStyle() const override
 	{
 		return static_cast<const struct FSlateWidgetStyle*>(&ButtonStyle);
-	*/
+	}
 
 	/**
 	 *	@fn SetTextStyle()

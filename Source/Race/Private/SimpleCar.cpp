@@ -75,12 +75,14 @@ ASimpleCar::ASimpleCar()
 	WheelArray.Emplace(Wheel0);
 
 	Wheel1 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Wheel1"));
+	//Wheel1->SetRelativeRotation(FRotator(0.f,0.f,180.f));
 	WheelArray.Emplace(Wheel1);
 
 	Wheel2 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Wheel2"));
 	WheelArray.Emplace(Wheel2);
 
 	Wheel3 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Wheel3"));
+	//Wheel3->SetRelativeRotation(FRotator(0.f, 0.f, 180.f));
 	WheelArray.Emplace(Wheel3);
 
 	for (auto it : WheelArray)
@@ -149,6 +151,7 @@ void ASimpleCar::BeginPlay()
 void ASimpleCar::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	HandleInputs();
 	if (Role != ROLE_SimulatedProxy)
 		UpdateCar(DeltaSeconds);
 	//Multicast_UpdateEffects(DeltaTime);
@@ -216,10 +219,11 @@ void ASimpleCar::UpdateCar(float DeltaSeconds)
 		if (WheelArray[b] != NULL) {
 			//rotate/locate wheel meshes
 			WheelArray[b]->SetWorldLocation(WheelsUpdate.WheelCenterLocation[b]);
-			WheelArray[b]->SetRelativeRotation(FRotator(WheelsUpdate.CurrentWheelPitch[b], WheelsUpdate.CurrentAngle[b], 0.0f));
+			const auto roll = ((b == 0 || b == 2) ? 180 : 0.00f);
+			WheelArray[b]->SetRelativeRotation(FRotator(WheelsUpdate.CurrentWheelPitch[b], WheelsUpdate.CurrentAngle[b], roll));
 		}
 
-		//tire smoke
+		//tire smokeA
 		if (WheelsUpdate.bIsSliding[b]) {
 			//spawn smoke particle
 			SpawnSmokeEffect(b);
@@ -375,15 +379,14 @@ void ASimpleCar::SetupPlayerInputComponent(class UInputComponent* InputComponent
 	InputComponent->BindAxis("MoveRight", this, &ASimpleCar::MoveRight);
 	InputComponent->BindAction("ChangeUp", IE_Pressed, this, &ASimpleCar::ChangeUp);
 	InputComponent->BindAction("ChangeDown", IE_Pressed, this, &ASimpleCar::ChangeDown);
+	InputComponent->BindAction("HandBrake", IE_Pressed, this, &ASimpleCar::HandBrakeOn);
+	InputComponent->BindAction("HandBrake", IE_Released, this, &ASimpleCar::HandBrakeOff);
 
 }
 
 void ASimpleCar::MoveForward(float Val)
 {
-	if (Role != ROLE_Authority)
-		Server_UpdateThrottle(Val);
-	else
-		Server_UpdateThrottle_Implementation(Val);
+	AddMovementInput(FVector(Val, 0.f, 0.f), 1.f, false);
 
 }
 
@@ -391,12 +394,56 @@ void ASimpleCar::MoveRight(float Val)
 {
 	//WheelsUpdate.CurrentAngle[0] = FMath::Lerp(WheelsUpdate.CurrentAngle[0], SteerAngle * Val, SteerSpeed * GetWorld()->DeltaTimeSeconds);
 	//WheelsUpdate.CurrentAngle[1] = FMath::Lerp(WheelsUpdate.CurrentAngle[1], SteerAngle * Val, SteerSpeed * GetWorld()->DeltaTimeSeconds);
-	
+	AddMovementInput(FVector(0.f, Val, 0.f), 1.f, false);
+}
+
+void ASimpleCar::HandBrakeOn()
+{
+	switch (Role)
+	{
+	case ROLE_AutonomousProxy:
+		Server_SetHandbrake(true);
+		break;
+	case ROLE_Authority:
+		Server_SetHandbrake_Implementation(true);
+	default:
+		bIsHandBrake = true;
+	}
+}
+
+void ASimpleCar::HandBrakeOff()
+{
+	switch (Role)
+	{
+	case ROLE_AutonomousProxy:
+		Server_SetHandbrake(false);
+		break;
+	case ROLE_Authority :
+		Server_SetHandbrake_Implementation(false);
+	default:
+		bIsHandBrake = false;
+	}
+}
+
+void ASimpleCar::HandleInputs()
+{
 	if (Role != ROLE_Authority)
-		Server_UpdateWheelAngle(Val);
+	{
+		Server_UpdateWheelAngle(ControlInputVector.Y);
+		Server_UpdateThrottle(ControlInputVector.X);
+	}
 	else
-		Server_UpdateWheelAngle_Implementation(Val);
-	
+	{
+		Server_UpdateWheelAngle_Implementation(ControlInputVector.Y);
+		Server_UpdateThrottle_Implementation(ControlInputVector.X);
+	}
+	ControlInputVector = FVector(0.f);
+}
+
+bool ASimpleCar::Server_SetHandbrake_Validate(bool Handbrake) { return true; }
+void ASimpleCar::Server_SetHandbrake_Implementation(bool Handbrake)
+{
+	bIsHandBrake = Handbrake;
 }
 
 
@@ -437,8 +484,6 @@ void ASimpleCar::Server_UpdateSuspensions_Implementation()
 {
 	Suspensions.Init();
 }
-
-
 
 // Called every substep for selected body instance
 void ASimpleCar::CustomPhysics(float DeltaTime, FBodyInstance* BodyInstance)
@@ -530,12 +575,15 @@ void ASimpleCar::CustomPhysics(float DeltaTime, FBodyInstance* BodyInstance)
 				FVector TireForces = AddLatGrip(DeltaTime, BodyInstance, SpringLocation, WheelRight, Index);
 				//engine/wheel torque
 				if (WheelSetup.bIsPowered[Index]) {
-					TireForces += AddDrive(DeltaTime, BodyInstance, SpringLocation, WheelForward, Index);
+					if(!bIsHandBrake)
+						TireForces += AddDrive(DeltaTime, BodyInstance, SpringLocation, WheelForward, Index);
 				}
 
 
 				TireForces *= GripMultiplier;
 				BodyInstance->AddImpulseAtPosition(TireForces * DeltaTime, SpringLocation);
+
+
 			}
 
 
@@ -736,6 +784,8 @@ float ASimpleCar::GetPowerToWheels(float DeltaTime, FBodyInstance* BodyInstance)
 	WheelRPM = ((60 * FMath::Abs(ForwardSpeed)) / (WheelSetup.Radius * 2 * PI));
 	//get engine rpm
 	EngineUpdate.EngineRPM = WheelRPM * Gears[CurrentGear] * FinalGearRatio;
+	
+	
 
 	//limit revs, and/or change gear
 	if (EngineUpdate.EngineRPM < GearDownRPM) {
@@ -777,6 +827,8 @@ float ASimpleCar::GetPowerToWheels(float DeltaTime, FBodyInstance* BodyInstance)
 	if (EngineUpdate.EngineRPM > RedLineRPM) {
 		EnginePower = 0;
 	}
+
+	DashboardInfo.Transmission_Gear = CurrentGear;
 
 	return EnginePower;
 }

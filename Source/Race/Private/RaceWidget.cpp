@@ -4,6 +4,8 @@
 #include "RaceCar.h"
 #include "Components/TextBlock.h"
 #include "RaceStatics.h"
+#include "RacePlayerState.h"
+#include "RaceGameState.h"
 
 URaceWidget::URaceWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -14,7 +16,9 @@ void URaceWidget::OnWidgetRebuilt()
 	if (SpeedTextBlock)
 		SpeedTextBlock->TextDelegate.BindDynamic(this, &URaceWidget::GetSpeedText);
 	if (GearTextBlock)
-		GearTextBlock->TextDelegate.BindDynamic(this, &URaceWidget::GetSpeedText);
+		GearTextBlock->TextDelegate.BindDynamic(this, &URaceWidget::GetGearText);
+	if (TimeTextBlock)
+		TimeTextBlock->TextDelegate.BindDynamic(this, &URaceWidget::GetTimeText);
 
 	const auto P = GetOwningPlayer();
 	if(P)
@@ -69,6 +73,26 @@ float URaceWidget::GetCurrentRPM() const
 		}
 	}
 	return 0.f;
+}
+
+FText URaceWidget::GetTimeText()
+{
+	if(!GetOwningPlayer())
+		return FText();
+
+	const auto PS = GetOwningPlayerState<ARacePlayerState>();
+	const auto GS = URaceStatics::GetRaceGameState(GetOwningPlayer());
+	if (!PS || !GS)
+		return FText();
+
+
+	const auto Time = GS->RaceTime() - PS->GetLastCheckpointTime();
+	FString TimeString;
+	if (Time.ExportTextItem(TimeString, FTimespan::MinValue(), nullptr, 0, nullptr))
+		return  FText::FromString(TimeString);
+
+
+	return  FText();
 }
 
 
